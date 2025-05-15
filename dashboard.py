@@ -2,12 +2,33 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
+
+def read_csv_flexibly(uploaded_file):
+    import pandas as pd
+    import chardet
+
+    rawdata = uploaded_file.read()
+    uploaded_file.seek(0)
+    result = chardet.detect(rawdata)
+    encoding = result['encoding']
+
+    try_separators = [',', ';', '\t']
+    for sep in try_separators:
+        try:
+            df = pd.read_csv(uploaded_file, sep=sep, encoding=encoding)
+            if df.shape[1] > 1:
+                return df
+        except Exception:
+            uploaded_file.seek(0)
+    uploaded_file.seek(0)
+    return pd.read_csv(uploaded_file, encoding=encoding)
+
 st.set_page_config(page_title="📊 Dashboard", layout="wide")
 st.title("📈 Visualización de Datos")
 
 uploaded_file = st.file_uploader("📁 Subí la base", type=["csv"])
 if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+    df = read_csv_flexibly(uploaded_file)
     col = st.selectbox("Filtrar por columna", df.columns)
     val = st.selectbox("Seleccioná un valor", df[col].dropna().unique())
     subset = df[df[col] == val]
