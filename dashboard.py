@@ -49,7 +49,7 @@ def read_flexible_file(uploaded_file):
 st.set_page_config(page_title="📊 Dashboard", layout="wide")
 st.title("📈 Visualización de Datos")
 
-uploaded_file = st.file_uploader("📁 Subí la base", type=[["csv", "xlsx"]])
+uploaded_file = st.file_uploader("📁 Subí la base", type=[[["csv", "xlsx"], "xlsx"]])
 if uploaded_file:
     df = read_flexible_file(uploaded_file)
     col = st.selectbox("Filtrar por columna", df.columns)

@@ -59,8 +59,8 @@ st.title("🔄 Cruce Inteligente de Datos")
 
 openai.api_key = st.secrets["openai"]["api_key"]
 
-uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=[["csv", "xlsx"]])
-uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=[["csv", "xlsx"]])
+uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=[[["csv", "xlsx"], "xlsx"]])
+uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=[[["csv", "xlsx"], "xlsx"]])
 
 if uploaded_file_1 and uploaded_file_2:
     base_df = read_flexible_file(uploaded_file_1)

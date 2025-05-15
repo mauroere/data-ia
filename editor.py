@@ -48,7 +48,7 @@ def read_flexible_file(uploaded_file):
 st.set_page_config(page_title="✏️ Editor", layout="wide")
 st.title("🛠️ Edición de Datos")
 
-uploaded_file = st.file_uploader("📁 Cargá CSV", type=[["csv", "xlsx"]])
+uploaded_file = st.file_uploader("📁 Cargá CSV", type=[[["csv", "xlsx"], "xlsx"]])
 if uploaded_file:
     df = read_flexible_file(uploaded_file)
     st.dataframe(df)

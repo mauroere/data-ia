@@ -49,7 +49,7 @@ def read_flexible_file(uploaded_file):
 st.set_page_config(page_title="📤 Exportación", layout="wide")
 st.title("📁 Exportador de Datos")
 
-uploaded_file = st.file_uploader("📁 Base para exportar", type=[["csv", "xlsx"]])
+uploaded_file = st.file_uploader("📁 Base para exportar", type=[[["csv", "xlsx"], "xlsx"]])
 if uploaded_file:
     df = read_flexible_file(uploaded_file)
     col = st.selectbox("Filtrar por columna", df.columns)
