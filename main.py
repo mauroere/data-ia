@@ -48,6 +48,9 @@ if uploaded_file_1 and uploaded_file_2:
 
     new_df.columns = normalize_column_names(new_df.columns)
     base_df.columns = normalize_column_names(base_df.columns)
+    required_cols = {'dni', 'nombre', 'apellido'}
+    if not required_cols.issubset(set(base_df.columns)):
+        st.warning('⚠️ El archivo base no contiene todas las columnas requeridas: ' + ', '.join(required_cols))
     required_cols = {"dni", "nombre", "apellido"}
 if not required_cols.issubset(set(base_df.columns)):
     st.warning("⚠️ El archivo base no contiene todas las columnas requeridas: " + ", ".join(required_cols))
