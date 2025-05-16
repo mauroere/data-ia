@@ -48,12 +48,14 @@ if uploaded_file_1 and uploaded_file_2:
 
     new_df.columns = normalize_column_names(new_df.columns)
     base_df.columns = normalize_column_names(base_df.columns)
+# Validación de columnas clave solo si hay datos
+if base_df is not None and not base_df.empty:
+    required_cols = {'dni', 'nombre', 'apellido'}
+    if not required_cols.issubset(set(base_df.columns)):
+        faltantes = required_cols - set(base_df.columns)
+        st.warning('⚠️ Faltan columnas requeridas: ' + ', '.join(faltantes))
         # Validación de columnas clave solo si hay datos
         if base_df is not None and not base_df.empty:
-            required_cols = {'dni', 'nombre', 'apellido'}
-            if not required_cols.issubset(set(base_df.columns)):
-                faltantes = required_cols - set(base_df.columns)
-                st.warning('⚠️ Faltan columnas requeridas: ' + ', '.join(faltantes))
 
 # Validación de columnas requeridas
 if base_df is not None and not base_df.empty:
