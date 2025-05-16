@@ -48,22 +48,13 @@ if uploaded_file_1 and uploaded_file_2:
 
     new_df.columns = normalize_column_names(new_df.columns)
     base_df.columns = normalize_column_names(base_df.columns)
-
-    if not base_df.empty:
-        required_cols = {'dni', 'nombre', 'apellido'}
-        missing_cols = required_cols - set(base_df.columns)
-        if missing_cols:
-            st.warning('⚠️ Faltan columnas requeridas: ' + ', '.join(missing_cols))
     if not base_df.empty:
         required_cols = {'dni', 'nombre', 'apellido'}
         if not required_cols.issubset(set(base_df.columns)):
-            st.warning('⚠️ El archivo base no contiene todas las columnas requeridas: ' + ', '.join(required_cols))
-    required_cols = {'dni', 'nombre', 'apellido'}
-    if not required_cols.issubset(set(base_df.columns)):
-        st.warning('⚠️ El archivo base no contiene todas las columnas requeridas: ' + ', '.join(required_cols))
-    required_cols = {"dni", "nombre", "apellido"}
-if not required_cols.issubset(set(base_df.columns)):
-    st.warning("⚠️ El archivo base no contiene todas las columnas requeridas: " + ", ".join(required_cols))
+            st.warning('⚠️ Faltan columnas requeridas: ' + ', '.join(required_cols))
+
+    if not base_df.empty:
+    if not base_df.empty:
 
     campo_clave = st.selectbox("Seleccioná campo clave", new_df.columns)
     coincidencias = []
