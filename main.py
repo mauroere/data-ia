@@ -54,12 +54,7 @@ if uploaded_file_1 and uploaded_file_2:
         # Validación de columnas clave solo si hay datos
 
 # Validación de columnas requeridas
-    if not base_df.empty:
-    if not base_df.empty:
-    if not base_df.empty:
 
-    if not base_df.empty:
-    if not base_df.empty:
 
     campo_clave = st.selectbox("Seleccioná campo clave", new_df.columns)
     coincidencias = []
