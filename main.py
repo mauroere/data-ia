@@ -3,23 +3,12 @@ import pandas as pd
 import openai
 from fuzzywuzzy import fuzz
 
-def are_similar(a, b, threshold=85):
-    return fuzz.token_sort_ratio(str(a), str(b)) >= threshold
-
-def normalize_column_names(columns):
-    import re
-    return [re.sub(r'[^a-zA-Z0-9]', '_', col.strip().lower()) for col in columns]
-
-
-
 def read_flexible_file(uploaded_file):
-    import pandas as pd
     import chardet
     import io
 
     file_name = uploaded_file.name.lower()
-
-    if file_name.endswith(".xlsx"):
+    if file_name.endswith(".xlsx") or file_name.endswith(".xls"):
         return pd.read_excel(uploaded_file)
 
     rawdata = uploaded_file.read()
@@ -38,29 +27,20 @@ def read_flexible_file(uploaded_file):
     uploaded_file.seek(0)
     return pd.read_csv(uploaded_file, encoding=encoding)
 
-    rawdata = uploaded_file.read()
-    uploaded_file.seek(0)
-    result = chardet.detect(rawdata)
-    encoding = result['encoding']
+def are_similar(a, b, threshold=85):
+    return fuzz.token_sort_ratio(str(a), str(b)) >= threshold
 
-    try_separators = [',', ';', '\t']
-    for sep in try_separators:
-        try:
-            df = pd.read_csv(uploaded_file, sep=sep, encoding=encoding)
-            if df.shape[1] > 1:
-                return df
-        except Exception:
-            uploaded_file.seek(0)
-    uploaded_file.seek(0)
-    return pd.read_csv(uploaded_file, encoding=encoding)
+def normalize_column_names(columns):
+    import re
+    return [re.sub(r'[^a-zA-Z0-9]', '_', col.strip().lower()) for col in columns]
 
 st.set_page_config(page_title="Cruce Inteligente", layout="wide")
 st.title("🔄 Cruce Inteligente de Datos")
 
 openai.api_key = st.secrets["openai"]["api_key"]
 
-uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=[[["csv", "xlsx"], "xlsx"]])
-uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=[[["csv", "xlsx"], "xlsx"]])
+uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
+uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
 
 if uploaded_file_1 and uploaded_file_2:
     base_df = read_flexible_file(uploaded_file_1)
