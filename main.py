@@ -52,6 +52,7 @@ if uploaded_file_1 and uploaded_file_2:
         required_cols = {'dni', 'nombre', 'apellido'}
         if not required_cols.issubset(set(base_df.columns)):
             st.warning('⚠️ Faltan columnas requeridas: ' + ', '.join(required_cols))
+    if not base_df.empty:
 
     if not base_df.empty:
     if not base_df.empty:
