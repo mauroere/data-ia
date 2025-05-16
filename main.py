@@ -58,6 +58,9 @@ if uploaded_file_1 and uploaded_file_2:
 
     campo_clave = st.selectbox("Seleccioná campo clave", new_df.columns)
     coincidencias = []
+        if campo_clave not in base_df.columns:
+            st.error(f"❌ La columna '{campo_clave}' no existe en la base cargada.")
+            st.stop()
 
     for _, fila in new_df.iterrows():
         val = fila[campo_clave]
