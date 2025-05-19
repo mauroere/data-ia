@@ -38,7 +38,15 @@ st.set_page_config(page_title="Cruce Inteligente", layout="wide")
 st.title("🔄 Cruce Inteligente de Datos")
 
 # Inicializar cliente OpenAI compatible con v1.0.0+
-client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
+try:
+    api_key = st.secrets["openai"]["api_key"]
+    if not api_key:
+        st.error("❌ No se encontró la API key de OpenAI. Por favor, configura tu API key en los secrets de Streamlit.")
+        st.stop()
+    client = openai.OpenAI(api_key=api_key)
+except Exception as e:
+    st.error(f"❌ Error al inicializar OpenAI: {str(e)}")
+    st.stop()
 
 uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
 uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
@@ -80,7 +88,7 @@ if pregunta:
     with st.spinner("Procesando..."):
         try:
             response = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",  # Cambiado a gpt-3.5-turbo que es más accesible
                 messages=[{"role": "user", "content": pregunta}],
                 temperature=0.3
             )
