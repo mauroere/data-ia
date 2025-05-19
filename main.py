@@ -37,37 +37,12 @@ def normalize_column_names(columns):
     import re
     return [re.sub(r'[^a-zA-Z0-9]', '_', col.strip().lower()) for col in columns]
 
-def get_proxy_config() -> Optional[dict]:
-    """Obtiene la configuración del proxy desde variables de entorno"""
-    http_proxy = os.getenv('HTTP_PROXY')
-    https_proxy = os.getenv('HTTPS_PROXY')
-    
-    if http_proxy or https_proxy:
-        return {
-            "http://": http_proxy,
-            "https://": https_proxy
-        }
-    return None
-
-def create_http_client():
-    """Crea un cliente HTTP con configuración de proxy y reintentos"""
-    proxies = get_proxy_config()
-    
-    return httpx.Client(
-        timeout=30.0,
-        proxies=proxies,
-        verify=False,  # Deshabilitar verificación SSL por defecto
-        follow_redirects=True,
-        headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-    )
-
 def make_api_request(pregunta: str) -> dict:
     """Realiza una petición a la API de Redpill.io"""
     headers = {
         "Authorization": f"Bearer {REDPILL_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     
     payload = {
@@ -76,8 +51,8 @@ def make_api_request(pregunta: str) -> dict:
         "temperature": 0.3
     }
     
-    with create_http_client() as client:
-        try:
+    try:
+        with httpx.Client(timeout=30.0, verify=False) as client:
             response = client.post(
                 REDPILL_API_URL,
                 headers=headers,
@@ -85,9 +60,9 @@ def make_api_request(pregunta: str) -> dict:
             )
             response.raise_for_status()
             return response.json()
-        except httpx.HTTPError as e:
-            st.error(f"Error de conexión: {str(e)}")
-            raise
+    except httpx.HTTPError as e:
+        st.error(f"Error de conexión: {str(e)}")
+        raise
 
 # Configuración de Redpill.io
 REDPILL_API_KEY = "sk-xYBWXr1epqP3Uq1A05qUql9tAyBsJE5F8PL5L66gBaE328VG"
