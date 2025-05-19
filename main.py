@@ -37,7 +37,8 @@ def normalize_column_names(columns):
 st.set_page_config(page_title="Cruce Inteligente", layout="wide")
 st.title("🔄 Cruce Inteligente de Datos")
 
-openai.api_key = st.secrets["openai"]["api_key"]
+# Inicializar cliente OpenAI compatible con v1.0.0+
+client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
 
 uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
 uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
@@ -78,12 +79,12 @@ pregunta = st.text_input("Hacé una pregunta sobre la base cargada:")
 if pregunta:
     with st.spinner("Procesando..."):
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[{"role": "user", "content": pregunta}],
                 temperature=0.3
             )
-            respuesta = response['choices'][0]['message']['content']
+            respuesta = response.choices[0].message.content
             st.success("Respuesta del asistente:")
             st.text_area("", respuesta, height=200)
             # Guardar historial
