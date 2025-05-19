@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import openai
+import requests
 from fuzzywuzzy import fuzz
 
 def read_flexible_file(uploaded_file):
@@ -37,16 +37,9 @@ def normalize_column_names(columns):
 st.set_page_config(page_title="Cruce Inteligente", layout="wide")
 st.title("🔄 Cruce Inteligente de Datos")
 
-# Inicializar cliente OpenAI compatible con v1.0.0+
-try:
-    api_key = st.secrets["openai"]["api_key"]
-    if not api_key:
-        st.error("❌ No se encontró la API key de OpenAI. Por favor, configura tu API key en los secrets de Streamlit.")
-        st.stop()
-    client = openai.OpenAI(api_key=api_key)
-except Exception as e:
-    st.error(f"❌ Error al inicializar OpenAI: {str(e)}")
-    st.stop()
+# Configuración de Redpill.io
+REDPILL_API_KEY = "sk-xYBWXr1epqP3Uq1A05qUql9tAyBsJE5F8PL5L66gBaE328VG"
+REDPILL_API_URL = "https://api.redpill.io/v1/chat/completions"
 
 uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
 uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
@@ -57,13 +50,6 @@ if uploaded_file_1 and uploaded_file_2:
 
     new_df.columns = normalize_column_names(new_df.columns)
     base_df.columns = normalize_column_names(base_df.columns)
-# Validación de columnas clave
-# Validación de columnas clave (afuera de bloques anidados)
-# Validación de columnas clave solo si hay datos
-        # Validación de columnas clave solo si hay datos
-
-# Validación de columnas requeridas
-
 
     campo_clave = st.selectbox("Seleccioná campo clave", new_df.columns)
     coincidencias = []
@@ -87,26 +73,37 @@ pregunta = st.text_input("Hacé una pregunta sobre la base cargada:")
 if pregunta:
     with st.spinner("Procesando..."):
         try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": pregunta}],
-                temperature=0.3
-            )
-            respuesta = response.choices[0].message.content
+            headers = {
+                "Authorization": f"Bearer {REDPILL_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": "redpill-1",  # Modelo de Redpill.io
+                "messages": [{"role": "user", "content": pregunta}],
+                "temperature": 0.3
+            }
+            
+            response = requests.post(REDPILL_API_URL, headers=headers, json=payload)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            
+            respuesta = response.json()["choices"][0]["message"]["content"]
             st.success("Respuesta del asistente:")
             st.text_area("", respuesta, height=200)
+            
             # Guardar historial
             if 'historial' not in st.session_state:
                 st.session_state.historial = []
             st.session_state.historial.append((pregunta, respuesta))
-        except Exception as e:
+            
+        except requests.exceptions.RequestException as e:
             error_message = str(e)
-            if "insufficient_quota" in error_message or "429" in error_message:
+            if "429" in error_message:
                 st.error("""
-                ❌ Se ha excedido el límite de uso de la API de OpenAI. 
+                ❌ Se ha excedido el límite de uso de la API de Redpill.io. 
                 
                 Para resolver esto:
-                1. Verifica tu saldo en https://platform.openai.com/account/billing
+                1. Verifica tu saldo en el panel de control de Redpill.io
                 2. Actualiza tu plan o agrega fondos a tu cuenta
                 3. Si estás usando una API key de prueba, considera obtener una nueva
                 
