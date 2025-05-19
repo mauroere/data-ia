@@ -88,7 +88,7 @@ if pregunta:
     with st.spinner("Procesando..."):
         try:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",  # Cambiado a gpt-3.5-turbo que es más accesible
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": pregunta}],
                 temperature=0.3
             )
@@ -100,7 +100,20 @@ if pregunta:
                 st.session_state.historial = []
             st.session_state.historial.append((pregunta, respuesta))
         except Exception as e:
-            st.error(f"Error al procesar la pregunta: {e}")
+            error_message = str(e)
+            if "insufficient_quota" in error_message or "429" in error_message:
+                st.error("""
+                ❌ Se ha excedido el límite de uso de la API de OpenAI. 
+                
+                Para resolver esto:
+                1. Verifica tu saldo en https://platform.openai.com/account/billing
+                2. Actualiza tu plan o agrega fondos a tu cuenta
+                3. Si estás usando una API key de prueba, considera obtener una nueva
+                
+                Mientras tanto, puedes seguir usando las otras funcionalidades de la aplicación.
+                """)
+            else:
+                st.error(f"Error al procesar la pregunta: {error_message}")
 
 # Historial de interacciones
 if 'historial' in st.session_state and st.session_state.historial:
