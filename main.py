@@ -3,7 +3,6 @@ import pandas as pd
 import requests
 from fuzzywuzzy import fuzz
 import urllib3
-import ssl
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -43,9 +42,9 @@ def create_http_session():
     
     # Configurar reintentos
     retry_strategy = Retry(
-        total=3,  # número total de reintentos
-        backoff_factor=1,  # tiempo de espera entre reintentos
-        status_forcelist=[429, 500, 502, 503, 504]  # códigos de estado para reintentar
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504]
     )
     
     # Configurar adaptador con reintentos
@@ -71,33 +70,29 @@ def make_api_request(pregunta):
     session = create_http_session()
     
     try:
-        # Intentar con diferentes configuraciones SSL
-        ssl_contexts = [
-            ssl.create_default_context(),  # Contexto SSL por defecto
-            ssl._create_unverified_context(),  # Contexto sin verificación
-            None  # Sin contexto SSL
-        ]
-        
-        for ssl_context in ssl_contexts:
-            try:
-                response = session.post(
-                    REDPILL_API_URL,
-                    headers=headers,
-                    json=payload,
-                    timeout=30,
-                    verify=ssl_context is not None,
-                    ssl_context=ssl_context
-                )
-                response.raise_for_status()
-                return response.json()
-            except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
-                continue
-            except Exception as e:
-                raise e
-        
-        # Si llegamos aquí, todos los intentos fallaron
-        raise requests.exceptions.SSLError("No se pudo establecer una conexión segura después de varios intentos")
-        
+        # Intentar primero con verificación SSL normal
+        try:
+            response = session.post(
+                REDPILL_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=30,
+                verify=True
+            )
+            response.raise_for_status()
+            return response.json()
+        except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
+            # Si falla, intentar sin verificación SSL
+            response = session.post(
+                REDPILL_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=30,
+                verify=False
+            )
+            response.raise_for_status()
+            return response.json()
+            
     except requests.exceptions.RequestException as e:
         raise e
     finally:
