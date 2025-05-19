@@ -35,8 +35,30 @@ def normalize_column_names(columns):
     import re
     return [re.sub(r'[^a-zA-Z0-9]', '_', col.strip().lower()) for col in columns]
 
-st.set_page_config(page_title="Cruce Inteligente", layout="wide")
-st.title("🔄 Cruce Inteligente de Datos")
+def make_api_request(pregunta):
+    headers = {
+        "Authorization": f"Bearer {REDPILL_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "model": "redpill-1",
+        "messages": [{"role": "user", "content": pregunta}],
+        "temperature": 0.3
+    }
+    
+    try:
+        # Intentar primero con verificación SSL normal
+        response = requests.post(REDPILL_API_URL, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.SSLError:
+        # Si falla SSL, intentar sin verificación
+        response = requests.post(REDPILL_API_URL, headers=headers, json=payload, verify=False, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise e
 
 # Configuración de Redpill.io
 REDPILL_API_KEY = "sk-xYBWXr1epqP3Uq1A05qUql9tAyBsJE5F8PL5L66gBaE328VG"
@@ -44,6 +66,9 @@ REDPILL_API_URL = "https://api.redpill.io/v1/chat/completions"
 
 # Configuración de requests para manejar problemas SSL
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+st.set_page_config(page_title="Cruce Inteligente", layout="wide")
+st.title("🔄 Cruce Inteligente de Datos")
 
 uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
 uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
@@ -142,28 +167,3 @@ if 'historial' in st.session_state and st.session_state.historial:
     if st.button("Descargar Historial"):
         df_historial = pd.DataFrame(st.session_state.historial, columns=["Pregunta", "Respuesta"])
         st.download_button("📥 Descargar CSV", df_historial.to_csv(index=False), "historial.csv", "text/csv")
-
-def make_api_request(pregunta):
-    headers = {
-        "Authorization": f"Bearer {REDPILL_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-        "model": "redpill-1",
-        "messages": [{"role": "user", "content": pregunta}],
-        "temperature": 0.3
-    }
-    
-    try:
-        # Intentar primero con verificación SSL normal
-        response = requests.post(REDPILL_API_URL, headers=headers, json=payload, timeout=30)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.SSLError:
-        # Si falla SSL, intentar sin verificación
-        response = requests.post(REDPILL_API_URL, headers=headers, json=payload, verify=False, timeout=30)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        raise e
