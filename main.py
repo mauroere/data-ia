@@ -52,7 +52,9 @@ def make_api_request(pregunta: str) -> dict:
     }
     
     try:
-        with httpx.Client(timeout=30.0, verify=False) as client:
+        # Configuración específica para manejar el error SSL
+        transport = httpx.HTTPTransport(verify=False)
+        with httpx.Client(timeout=30.0, transport=transport) as client:
             response = client.post(
                 REDPILL_API_URL,
                 headers=headers,
