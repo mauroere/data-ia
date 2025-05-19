@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
-import requests
+import httpx
 from fuzzywuzzy import fuzz
 import urllib3
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import os
+from typing import Optional
 
 def read_flexible_file(uploaded_file):
     import chardet
@@ -37,28 +37,37 @@ def normalize_column_names(columns):
     import re
     return [re.sub(r'[^a-zA-Z0-9]', '_', col.strip().lower()) for col in columns]
 
-def create_http_session():
-    session = requests.Session()
+def get_proxy_config() -> Optional[dict]:
+    """Obtiene la configuración del proxy desde variables de entorno"""
+    http_proxy = os.getenv('HTTP_PROXY')
+    https_proxy = os.getenv('HTTPS_PROXY')
     
-    # Configurar reintentos
-    retry_strategy = Retry(
-        total=3,
-        backoff_factor=1,
-        status_forcelist=[429, 500, 502, 503, 504]
-    )
-    
-    # Configurar adaptador con reintentos
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("https://", adapter)
-    session.mount("http://", adapter)
-    
-    return session
+    if http_proxy or https_proxy:
+        return {
+            "http://": http_proxy,
+            "https://": https_proxy
+        }
+    return None
 
-def make_api_request(pregunta):
+def create_http_client():
+    """Crea un cliente HTTP con configuración de proxy y reintentos"""
+    proxies = get_proxy_config()
+    
+    return httpx.Client(
+        timeout=30.0,
+        proxies=proxies,
+        verify=False,  # Deshabilitar verificación SSL por defecto
+        follow_redirects=True,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+    )
+
+def make_api_request(pregunta: str) -> dict:
+    """Realiza una petición a la API de Redpill.io"""
     headers = {
         "Authorization": f"Bearer {REDPILL_API_KEY}",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "Content-Type": "application/json"
     }
     
     payload = {
@@ -67,36 +76,18 @@ def make_api_request(pregunta):
         "temperature": 0.3
     }
     
-    session = create_http_session()
-    
-    try:
-        # Intentar primero con verificación SSL normal
+    with create_http_client() as client:
         try:
-            response = session.post(
+            response = client.post(
                 REDPILL_API_URL,
                 headers=headers,
-                json=payload,
-                timeout=30,
-                verify=True
+                json=payload
             )
             response.raise_for_status()
             return response.json()
-        except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
-            # Si falla, intentar sin verificación SSL
-            response = session.post(
-                REDPILL_API_URL,
-                headers=headers,
-                json=payload,
-                timeout=30,
-                verify=False
-            )
-            response.raise_for_status()
-            return response.json()
-            
-    except requests.exceptions.RequestException as e:
-        raise e
-    finally:
-        session.close()
+        except httpx.HTTPError as e:
+            st.error(f"Error de conexión: {str(e)}")
+            raise
 
 # Configuración de Redpill.io
 REDPILL_API_KEY = "sk-xYBWXr1epqP3Uq1A05qUql9tAyBsJE5F8PL5L66gBaE328VG"
@@ -150,36 +141,7 @@ if pregunta:
                 st.session_state.historial = []
             st.session_state.historial.append((pregunta, respuesta))
             
-        except requests.exceptions.SSLError as e:
-            st.error("""
-            ❌ Error de conexión segura con Redpill.io.
-            
-            Por favor, verifica:
-            1. Tu conexión a internet
-            2. Que el certificado SSL de tu sistema esté actualizado
-            3. Que no haya un proxy o firewall bloqueando la conexión
-            
-            Si el problema persiste, contacta al soporte técnico.
-            """)
-        except requests.exceptions.ConnectionError as e:
-            st.error("""
-            ❌ No se pudo conectar con Redpill.io.
-            
-            Por favor, verifica:
-            1. Tu conexión a internet
-            2. Que el servicio de Redpill.io esté disponible
-            3. Que no haya un firewall bloqueando la conexión
-            """)
-        except requests.exceptions.Timeout as e:
-            st.error("""
-            ❌ La conexión con Redpill.io ha excedido el tiempo de espera.
-            
-            Por favor:
-            1. Intenta nuevamente en unos momentos
-            2. Verifica tu conexión a internet
-            3. Si el problema persiste, contacta al soporte técnico
-            """)
-        except requests.exceptions.RequestException as e:
+        except httpx.HTTPError as e:
             error_message = str(e)
             if "429" in error_message:
                 st.error("""
