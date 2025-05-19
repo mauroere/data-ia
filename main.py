@@ -58,9 +58,9 @@ if uploaded_file_1 and uploaded_file_2:
 
     campo_clave = st.selectbox("Seleccioná campo clave", new_df.columns)
     coincidencias = []
-        if campo_clave not in base_df.columns:
-            st.error(f"❌ La columna '{campo_clave}' no existe en la base cargada.")
-            st.stop()
+    if campo_clave not in base_df.columns:
+        st.error(f"❌ La columna '{campo_clave}' no existe en la base cargada.")
+        st.stop()
 
     for _, fila in new_df.iterrows():
         val = fila[campo_clave]
@@ -71,3 +71,35 @@ if uploaded_file_1 and uploaded_file_2:
 
     st.success(f"{len(coincidencias)} coincidencias encontradas.")
     st.dataframe(pd.DataFrame(coincidencias, columns=["Nuevo", "Base"]))
+
+# Asistente conversacional
+st.title("💬 Asistente Conversacional")
+pregunta = st.text_input("Hacé una pregunta sobre la base cargada:")
+if pregunta:
+    with st.spinner("Procesando..."):
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": pregunta}],
+                temperature=0.3
+            )
+            respuesta = response['choices'][0]['message']['content']
+            st.success("Respuesta del asistente:")
+            st.text_area("", respuesta, height=200)
+            # Guardar historial
+            if 'historial' not in st.session_state:
+                st.session_state.historial = []
+            st.session_state.historial.append((pregunta, respuesta))
+        except Exception as e:
+            st.error(f"Error al procesar la pregunta: {e}")
+
+# Historial de interacciones
+if 'historial' in st.session_state and st.session_state.historial:
+    st.title("🕓 Historial de Interacciones")
+    for i, (p, r) in enumerate(st.session_state.historial):
+        st.text(f"Pregunta {i+1}: {p}")
+        st.text(f"Respuesta: {r}")
+        st.markdown("---")
+    if st.button("Descargar Historial"):
+        df_historial = pd.DataFrame(st.session_state.historial, columns=["Pregunta", "Respuesta"])
+        st.download_button("📥 Descargar CSV", df_historial.to_csv(index=False), "historial.csv", "text/csv")
