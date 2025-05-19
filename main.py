@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from fuzzywuzzy import fuzz
+import urllib3
 
 def read_flexible_file(uploaded_file):
     import chardet
@@ -41,6 +42,9 @@ st.title("🔄 Cruce Inteligente de Datos")
 REDPILL_API_KEY = "sk-xYBWXr1epqP3Uq1A05qUql9tAyBsJE5F8PL5L66gBaE328VG"
 REDPILL_API_URL = "https://api.redpill.io/v1/chat/completions"
 
+# Configuración de requests para manejar problemas SSL
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
 uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
 
@@ -73,21 +77,8 @@ pregunta = st.text_input("Hacé una pregunta sobre la base cargada:")
 if pregunta:
     with st.spinner("Procesando..."):
         try:
-            headers = {
-                "Authorization": f"Bearer {REDPILL_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": "redpill-1",  # Modelo de Redpill.io
-                "messages": [{"role": "user", "content": pregunta}],
-                "temperature": 0.3
-            }
-            
-            response = requests.post(REDPILL_API_URL, headers=headers, json=payload)
-            response.raise_for_status()  # Raise an exception for bad status codes
-            
-            respuesta = response.json()["choices"][0]["message"]["content"]
+            response_data = make_api_request(pregunta)
+            respuesta = response_data["choices"][0]["message"]["content"]
             st.success("Respuesta del asistente:")
             st.text_area("", respuesta, height=200)
             
@@ -96,6 +87,35 @@ if pregunta:
                 st.session_state.historial = []
             st.session_state.historial.append((pregunta, respuesta))
             
+        except requests.exceptions.SSLError as e:
+            st.error("""
+            ❌ Error de conexión segura con Redpill.io.
+            
+            Por favor, verifica:
+            1. Tu conexión a internet
+            2. Que el certificado SSL de tu sistema esté actualizado
+            3. Que no haya un proxy o firewall bloqueando la conexión
+            
+            Si el problema persiste, contacta al soporte técnico.
+            """)
+        except requests.exceptions.ConnectionError as e:
+            st.error("""
+            ❌ No se pudo conectar con Redpill.io.
+            
+            Por favor, verifica:
+            1. Tu conexión a internet
+            2. Que el servicio de Redpill.io esté disponible
+            3. Que no haya un firewall bloqueando la conexión
+            """)
+        except requests.exceptions.Timeout as e:
+            st.error("""
+            ❌ La conexión con Redpill.io ha excedido el tiempo de espera.
+            
+            Por favor:
+            1. Intenta nuevamente en unos momentos
+            2. Verifica tu conexión a internet
+            3. Si el problema persiste, contacta al soporte técnico
+            """)
         except requests.exceptions.RequestException as e:
             error_message = str(e)
             if "429" in error_message:
@@ -122,3 +142,28 @@ if 'historial' in st.session_state and st.session_state.historial:
     if st.button("Descargar Historial"):
         df_historial = pd.DataFrame(st.session_state.historial, columns=["Pregunta", "Respuesta"])
         st.download_button("📥 Descargar CSV", df_historial.to_csv(index=False), "historial.csv", "text/csv")
+
+def make_api_request(pregunta):
+    headers = {
+        "Authorization": f"Bearer {REDPILL_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "model": "redpill-1",
+        "messages": [{"role": "user", "content": pregunta}],
+        "temperature": 0.3
+    }
+    
+    try:
+        # Intentar primero con verificación SSL normal
+        response = requests.post(REDPILL_API_URL, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.SSLError:
+        # Si falla SSL, intentar sin verificación
+        response = requests.post(REDPILL_API_URL, headers=headers, json=payload, verify=False, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise e
