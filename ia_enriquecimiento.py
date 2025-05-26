@@ -6,7 +6,8 @@ import io
 
 def run_ia_enriquecimiento():
     st.title("🤖 Limpieza y Enriquecimiento de Datos con IA")
-      # Obtener API key
+    
+    # Obtener API key
     api_key = get_api_key("openai")
     
     # Verificar si existe API key
@@ -179,64 +180,6 @@ DATOS:
 if __name__ == "__main__":
     st.set_page_config(page_title="✨ IA Enriquecimiento", layout="wide")
     run_ia_enriquecimiento()
-    
-    if st.button("Limpiar y enriquecer con IA"):
-        if not entrada.strip():
-            st.warning("Por favor, ingresá datos para procesar.")
-        else:
-            with st.spinner("Procesando con inteligencia artificial..."):
-                # Construir el prompt completo
-                formato_instruccion = ""
-                if formato_salida != "Auto-detectar":
-                    formato_instruccion = f"El resultado debe estar en formato {formato_salida}."
-                
-                prompt = f"""{instruccion}
-
-{formato_instruccion}
-
-DATOS:
-{entrada.strip()}
-"""
-                try:
-                    # Llamada a la API de OpenAI con la nueva librería
-                    response = cliente.chat.completions.create(
-                        model=modelo,
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=0.3
-                    )
-                    salida = response.choices[0].message.content
-                    
-                    st.success("Resultado generado por IA:")
-                    st.text_area("🧠 Datos estructurados", salida, height=300)
-                    
-                    # Guardar en historial
-                    if 'historial_ia_enriq' not in st.session_state:
-                        st.session_state.historial_ia_enriq = []
-                    st.session_state.historial_ia_enriq.append({
-                        "entrada": entrada.strip(),
-                        "salida": salida,
-                        "modelo": modelo
-                    })
-                    
-                    # Ofrecer opciones para exportar el resultado
-                    if st.button("Exportar resultado"):
-                        # Detectar si es CSV y ofrecer descarga directa
-                        if formato_salida == "CSV" or "," in salida.split("\n")[0]:
-                            st.download_button("📥 Descargar CSV", salida, "datos_estructurados.csv", "text/csv")
-                        else:
-                            st.download_button("📥 Descargar como archivo de texto", salida, "datos_estructurados.txt", "text/plain")
-                    
-                except Exception as e:
-                    st.error(f"Ocurrió un error al procesar con OpenAI: {e}")
-    
-    # Mostrar historial de procesamiento
-    if 'historial_ia_enriq' in st.session_state and st.session_state.historial_ia_enriq:
-        with st.expander("Ver historial de procesamiento"):
-            for i, item in enumerate(st.session_state.historial_ia_enriq):
-                st.subheader(f"Procesamiento #{i+1} - Modelo: {item['modelo']}")
-                st.text_area("Entrada:", item["entrada"], height=100, key=f"in_{i}")
-                st.text_area("Salida:", item["salida"], height=150, key=f"out_{i}")
-                st.divider()
 
 if __name__ == "__main__":
     st.set_page_config(page_title="✨ IA Enriquecimiento", layout="wide")

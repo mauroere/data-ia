@@ -12,6 +12,7 @@ def make_api_request(pregunta: str) -> dict:
     """Realiza una petición a la API de Redpill.io usando un proxy personalizado"""
     api_key = get_api_key("redpill")
     api_url = get_api_url("redpill")
+    
     if not api_key:
         # Intentar obtener la clave API del usuario
         st.warning("🔑 No se ha encontrado la clave API de Redpill en la configuración.")
@@ -28,10 +29,9 @@ def make_api_request(pregunta: str) -> dict:
         else:
             # Guardar en session_state para esta sesión
             st.session_state["redpill_api_key"] = api_key
-      try:
+    
+    try:
         # Uso de la biblioteca requests con verificación SSL desactivada
-        import requests
-        
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
@@ -83,9 +83,6 @@ navegacion = show_navigation()
 if navegacion == "🔄 Cruce Inteligente":
     st.title("🔄 Cruce Inteligente de Datos")
 
-if navegacion == "🔄 Cruce Inteligente":
-    st.title("🔄 Cruce Inteligente de Datos")
-
     uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
     uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
 
@@ -107,7 +104,9 @@ if navegacion == "🔄 Cruce Inteligente":
             for _, bfila in base_df.iterrows():
                 if are_similar(val, bfila[campo_clave]):
                     coincidencias.append((val, bfila[campo_clave]))
-                    break        st.success(f"{len(coincidencias)} coincidencias encontradas.")
+                    break
+
+        st.success(f"{len(coincidencias)} coincidencias encontradas.")
         st.dataframe(pd.DataFrame(coincidencias, columns=["Nuevo", "Base"]))
     
     # Asistente conversacional
@@ -120,7 +119,8 @@ if navegacion == "🔄 Cruce Inteligente":
                 respuesta = response_data["choices"][0]["message"]["content"]
                 st.success("Respuesta del asistente:")
                 st.text_area("", respuesta, height=200)
-                  # Guardar historial
+                
+                # Guardar historial
                 if 'historial' not in st.session_state:
                     st.session_state.historial = []
                 st.session_state.historial.append((pregunta, respuesta))

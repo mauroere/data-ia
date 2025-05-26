@@ -118,11 +118,10 @@ def mostrar_panel_usuario():
     """Muestra el panel de usuario según el rol"""
     usuario_actual = st.session_state.usuario_actual
     datos_usuario = st.session_state.usuarios[usuario_actual]
-    
-    # Información de usuario
+      # Información de usuario
     st.sidebar.success(f"Usuario: {datos_usuario['nombre']}")
     st.sidebar.info(f"Rol: {datos_usuario['rol']}")
-      if st.sidebar.button("Cerrar sesión"):
+    if st.sidebar.button("Cerrar sesión"):
         registrar_actividad("logout")
         st.session_state.usuario_actual = None
         st.rerun()
