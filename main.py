@@ -31,29 +31,16 @@ def make_api_request(pregunta: str) -> dict:
             st.session_state["redpill_api_key"] = api_key
     
     try:
-        # Uso de la biblioteca requests con verificación SSL desactivada
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        }
-        
-        payload = {
-            "model": "redpill-llama-3-8b-chat",
-            "messages": [{"role": "user", "content": pregunta}],
-            "temperature": 0.7,
-            "max_tokens": 1000
-        }
-        
-        response = requests.post(
-            api_url,
-            headers=headers,
-            json=payload,
-            verify=False,  # Desactivar verificación SSL
-            timeout=30.0   # Timeout en segundos
+        # Utilizamos el proxy de API para manejar mejor los problemas de SSL
+        messages = [{"role": "user", "content": pregunta}]
+        return make_api_request_proxy(
+            api_key=api_key,
+            api_url=api_url,
+            messages=messages,
+            model="redpill-llama-3-8b-chat",
+            temperature=0.7
         )
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
+    except Exception as e:
         st.error(f"Error de conexión: {str(e)}")
         raise
 
@@ -66,7 +53,7 @@ def show_navigation():
     option = st.sidebar.radio(
         "Selecciona una función:",
         ["🔄 Cruce Inteligente", "📊 Dashboard", "✏️ Editor", "📤 Exportador", 
-         "🤖 Enriquecimiento IA", "🗺️ Mapeo de Datos", "👥 Control de Accesos"]
+         "🤖 Enriquecimiento IA", "🗺️ Mapeo de Datos", "👥 Control de Accesos", "🔍 Diagnóstico API"]
     )
     return option
 
@@ -136,18 +123,23 @@ if navegacion == "🔄 Cruce Inteligente":
                     3. Si estás usando una API key de prueba, considera obtener una nueva
                     
                     Mientras tanto, puedes seguir usando las otras funcionalidades de la aplicación.
-                    """)
-                elif "SSL" in error_message or "TLS" in error_message:
+                    """)                elif "SSL" in error_message or "TLS" in error_message:
                     st.error("""
                     ❌ Error de conexión segura (SSL/TLS) al comunicarse con la API.
                     
                     Esto podría deberse a:
                     1. Problemas de red o firewall
                     2. Certificados SSL obsoletos o inválidos
+                    3. Problemas con el nombre del servidor (TLSV1_UNRECOGNIZED_NAME)
                     
-                    Hemos configurado la aplicación para usar conexiones no verificadas, por favor intenta nuevamente.
-                    Si el problema persiste, contacta al soporte técnico.
+                    Puedes usar la herramienta de diagnóstico de la API en la sección '🔍 Diagnóstico API' 
+                    para obtener más información sobre el problema.
                     """)
+                    # Ofrecer diagnóstico directo
+                    if st.button("Ejecutar diagnóstico de conexión"):
+                        from api_diagnostico import test_api_connection
+                        result = test_api_connection(get_api_url("redpill"), get_api_key("redpill"))
+                        st.json(result)
                 else:
                     st.error(f"Error al procesar la pregunta: {error_message}")
             except Exception as e:
@@ -195,3 +187,8 @@ elif navegacion == "👥 Control de Accesos":
     # Importar y ejecutar el código de control de accesos
     from colaboracion import run_colaboracion
     run_colaboracion()
+    
+elif navegacion == "🔍 Diagnóstico API":
+    # Importar y ejecutar el código de diagnóstico de API
+    from api_diagnostico import display_connection_test
+    display_connection_test()
