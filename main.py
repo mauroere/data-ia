@@ -6,7 +6,7 @@ import warnings
 import requests
 import traceback
 from typing import Optional
-from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url
+from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url, get_api_model
 from api_proxy import make_api_request_proxy
 from api_cache import get_api_cache
 
@@ -17,6 +17,7 @@ def make_api_request(pregunta: str) -> dict:
     """Realiza una petición a la API de Redpill.io usando un proxy personalizado"""
     api_key = get_api_key("redpill")
     api_url = get_api_url("redpill")
+    api_model = get_api_model("redpill")
     
     if not api_key:
         # Intentar obtener la clave API del usuario
@@ -38,7 +39,7 @@ def make_api_request(pregunta: str) -> dict:
     # Crear datos para buscar en caché
     cache_data = {
         "messages": [{"role": "user", "content": pregunta}],
-        "model": "redpill-llama-3-8b-chat",
+        "model": api_model,
         "temperature": 0.7
     }
     
@@ -55,7 +56,7 @@ def make_api_request(pregunta: str) -> dict:
             api_key=api_key,
             api_url=api_url,
             messages=messages,
-            model="redpill-llama-3-8b-chat",
+            model=api_model,
             temperature=0.7,
             use_cache=True  # Usar caché interno del proxy también
         )
