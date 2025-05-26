@@ -105,6 +105,102 @@ def create_session(target_host=None):
     })
     
     return session
+from urllib3.connectionpool import HTTPSConnectionPool
+
+# Suprimir advertencias SSL para evitar mensajes molestos en la consola
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+class HostNameIgnoringHTTPSConnection(HTTPSConnection):
+    """Conexión HTTPS que ignora la verificación del nombre de host"""
+    def _new_conn(self):
+        sock = socket.create_connection(
+            address=(self.host, self.port),
+            timeout=self.timeout,
+            source_address=self.source_address,
+        )
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+        context.verify_mode = ssl.CERT_NONE
+        context.check_hostname = False
+        return context.wrap_socket(sock, server_hostname=None)
+
+class HostNameIgnoringHTTPSConnectionPool(HTTPSConnectionPool):
+    """Pool de conexiones HTTPS que usa la conexión personalizada"""
+    ConnectionCls = HostNameIgnoringHTTPSConnection
+
+class AdvancedTLSAdapter(HTTPAdapter):
+    """Adaptador HTTP avanzado que maneja problemas comunes de SSL"""
+    def __init__(self, *args, **kwargs):
+        self.target_host = kwargs.pop('target_host', None)
+        super(AdvancedTLSAdapter, self).__init__(*args, **kwargs)
+    
+    def init_poolmanager(self, connections, maxsize, block=False):
+        """Inicializa un PoolManager con SSL avanzado"""
+        # Crear contexto SSL que ignora problemas de verificación de nombre de host
+        ctx = ssl_.create_urllib3_context(ssl.PROTOCOL_TLS)
+        # Desactivar la verificación del nombre del host
+        ctx.check_hostname = False
+        # No verificar certificados
+        ctx.verify_mode = ssl.CERT_NONE
+        # Configurar para ignorar errores específicos de SSL
+        ctx.options |= ssl.OP_NO_SSLv2
+        ctx.options |= ssl.OP_NO_SSLv3
+        ctx.options |= ssl.OP_NO_TLSv1
+        ctx.options |= ssl.OP_NO_TLSv1_1
+        
+        # Usar la conexión personalizada para hosts problemáticos
+        if self.target_host:
+            pool_kwargs = {
+                'num_pools': connections,
+                'maxsize': maxsize,
+                'block': block,
+                'strict': True,
+                'ssl_context': ctx,
+            }
+            self.poolmanager = urllib3.PoolManager(
+                **pool_kwargs,
+                # Use our custom connection class for specific hosts
+                connection_pool_kw={'pool_classes': {
+                    'https': HostNameIgnoringHTTPSConnectionPool
+                }}
+            )
+        else:
+            self.poolmanager = PoolManager(
+                num_pools=connections,
+                maxsize=maxsize,
+                block=block,
+                ssl_context=ctx
+            )
+
+def resolve_ip(hostname):
+    """Resuelve la IP de un nombre de host"""
+    try:
+        return socket.gethostbyname(hostname)
+    except socket.gaierror:
+        # Si no se puede resolver, devolver el hostname original
+        return hostname
+
+def create_session(target_host=None):
+    """
+    Crea una sesión de requests con configuración SSL personalizada
+    
+    Args:
+        target_host: Nombre de host específico para usar conexión personalizada
+    """
+    session = requests.Session()
+    
+    # Usar el adaptador TLS avanzado para todas las conexiones HTTPS
+    adapter = AdvancedTLSAdapter(target_host=target_host)
+    session.mount("https://", adapter)
+    
+    # Desactivar verificación SSL
+    session.verify = False
+    
+    # Configurar el User-Agent
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+    })
+    
+    return session
 
 def make_api_request_proxy(api_key, api_url, messages, model="redpill-llama-3-8b-chat", temperature=0.3, use_cache=True):
     """
@@ -337,8 +433,7 @@ def make_api_request_proxy(api_key, api_url, messages, model="redpill-llama-3-8b
             
             # Devolver resultado
             return result
-            
-        except json.JSONDecodeError:
+              except json.JSONDecodeError:
             all_errors.append(f"Error al decodificar JSON en respuesta de socket")
             if b"200 OK" in response_data:
                 all_errors.append(f"Respuesta del servidor: {response_data[:200]}")
@@ -356,13 +451,3 @@ def make_api_request_proxy(api_key, api_url, messages, model="redpill-llama-3-8b
         error_message += "\n\nRecomendación: Verifica que tu sistema tenga certificados SSL actualizados."
     
     raise Exception(error_message)
-            elif e.response.status_code == 401:
-                raise Exception("API key inválida o expirada. Verifica tus credenciales.")
-            else:
-                raise Exception(f"Error HTTP {e.response.status_code}: {str(e)}")
-        else:
-            raise Exception(f"Error HTTP no especificado: {str(e)}")
-    
-    except Exception as e:
-        # Cualquier otro error
-        raise Exception(f"Error en la petición: {str(e)}")
