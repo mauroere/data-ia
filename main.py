@@ -119,11 +119,11 @@ if navegacion == "🔄 Cruce Inteligente":
                     
                     Para resolver esto:
                     1. Verifica tu saldo en el panel de control de Redpill.io
-                    2. Actualiza tu plan o agrega fondos a tu cuenta
-                    3. Si estás usando una API key de prueba, considera obtener una nueva
+                    2. Actualiza tu plan o agrega fondos a tu cuenta                    3. Si estás usando una API key de prueba, considera obtener una nueva
                     
                     Mientras tanto, puedes seguir usando las otras funcionalidades de la aplicación.
-                    """)                elif "SSL" in error_message or "TLS" in error_message:
+                    """)
+                elif "SSL" in error_message or "TLS" in error_message:
                     st.error("""
                     ❌ Error de conexión segura (SSL/TLS) al comunicarse con la API.
                     
