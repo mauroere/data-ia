@@ -1,18 +1,14 @@
 import streamlit as st
 import pandas as pd
-import httpx
+import json
 import os
 import warnings
-import urllib3
 from typing import Optional
 from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url
-
-# Suprimir advertencias SSL para evitar mensajes molestos en la consola
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-warnings.filterwarnings("ignore", message=".*Certificate verification.*")
+from api_proxy import make_api_request_proxy
 
 def make_api_request(pregunta: str) -> dict:
-    """Realiza una petición a la API de Redpill.io"""
+    """Realiza una petición a la API de Redpill.io usando un proxy personalizado"""
     api_key = get_api_key("redpill")
     api_url = get_api_url("redpill")
     
@@ -32,30 +28,18 @@ def make_api_request(pregunta: str) -> dict:
         else:
             # Guardar en session_state para esta sesión
             st.session_state["redpill_api_key"] = api_key
-    
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    
-    payload = {
-        "model": "redpill-1",
-        "messages": [{"role": "user", "content": pregunta}],
-        "temperature": 0.3
-    }
-    
-    try:
-        # Configurar cliente httpx con verificación SSL desactivada para evitar problemas de certificado
-        with httpx.Client(timeout=30.0, verify=False) as client:
-            response = client.post(
-                api_url,
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
-            return response.json()
-    except httpx.HTTPError as e:
+      try:
+        # Uso de la biblioteca requests con verificación SSL desactivada
+        response = requests.post(
+            api_url,
+            headers=headers,
+            json=payload,
+            verify=False,  # Desactivar verificación SSL
+            timeout=30.0   # Timeout en segundos
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
         st.error(f"Error de conexión: {str(e)}")
         raise
 
@@ -127,8 +111,7 @@ if navegacion == "🔄 Cruce Inteligente":
                 if 'historial' not in st.session_state:
                     st.session_state.historial = []
                 st.session_state.historial.append((pregunta, respuesta))
-                
-            except httpx.HTTPError as e:
+                  except requests.RequestException as e:
                 error_message = str(e)
                 if "429" in error_message:
                     st.error("""
@@ -149,7 +132,7 @@ if navegacion == "🔄 Cruce Inteligente":
                     1. Problemas de red o firewall
                     2. Certificados SSL obsoletos o inválidos
                     
-                    Hemos configurado la aplicación para ignorar estos errores, por favor intenta nuevamente.
+                    Hemos configurado la aplicación para usar conexiones no verificadas, por favor intenta nuevamente.
                     Si el problema persiste, contacta al soporte técnico.
                     """)
                 else:
