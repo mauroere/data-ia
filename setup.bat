@@ -33,7 +33,7 @@ echo api_key = "%openai_key%"
 echo.
 echo [redpill]
 echo api_key = "%redpill_key%"
-echo api_url = "https://api.redpill.io/v1/chat/completions"
+echo api_url = "https://api.redpill.ai/v1/chat/completions"
 ) > .streamlit\secrets.toml
 
 echo.

@@ -34,7 +34,7 @@ api_key = "${openai_key}"
 
 [redpill]
 api_key = "${redpill_key}"
-api_url = "https://api.redpill.io/v1/chat/completions"
+api_url = "https://api.redpill.ai/v1/chat/completions"
 EOL
 
 echo ""

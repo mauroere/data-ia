@@ -87,7 +87,7 @@ def display_ssl_diagnostics():
     
     url = st.text_input(
         "URL para diagnóstico", 
-        value="https://api.redpill.io/v1/models",
+        value="https://api.redpill.ai/v1/models",
         help="URL completa incluyendo https://"
     )
     
