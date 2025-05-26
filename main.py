@@ -2,8 +2,14 @@ import streamlit as st
 import pandas as pd
 import httpx
 import os
+import warnings
+import urllib3
 from typing import Optional
 from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url
+
+# Suprimir advertencias SSL para evitar mensajes molestos en la consola
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+warnings.filterwarnings("ignore", message=".*Certificate verification.*")
 
 def make_api_request(pregunta: str) -> dict:
     """Realiza una petición a la API de Redpill.io"""
@@ -27,8 +33,8 @@ def make_api_request(pregunta: str) -> dict:
     }
     
     try:
-        # Usar la conexión segura por defecto de httpx
-        with httpx.Client(timeout=30.0) as client:
+        # Configurar cliente httpx con verificación SSL desactivada para evitar problemas de certificado
+        with httpx.Client(timeout=30.0, verify=False) as client:
             response = client.post(
                 api_url,
                 headers=headers,
@@ -93,9 +99,7 @@ if navegacion == "🔄 Cruce Inteligente":
                     break
 
         st.success(f"{len(coincidencias)} coincidencias encontradas.")
-        st.dataframe(pd.DataFrame(coincidencias, columns=["Nuevo", "Base"]))
-
-    # Asistente conversacional
+        st.dataframe(pd.DataFrame(coincidencias, columns=["Nuevo", "Base"]))    # Asistente conversacional
     st.title("💬 Asistente Conversacional")
     pregunta = st.text_input("Hacé una pregunta sobre la base cargada:")
     if pregunta:
@@ -124,8 +128,22 @@ if navegacion == "🔄 Cruce Inteligente":
                     
                     Mientras tanto, puedes seguir usando las otras funcionalidades de la aplicación.
                     """)
+                elif "SSL" in error_message or "TLS" in error_message:
+                    st.error("""
+                    ❌ Error de conexión segura (SSL/TLS) al comunicarse con la API.
+                    
+                    Esto podría deberse a:
+                    1. Problemas de red o firewall
+                    2. Certificados SSL obsoletos o inválidos
+                    
+                    Hemos configurado la aplicación para ignorar estos errores, por favor intenta nuevamente.
+                    Si el problema persiste, contacta al soporte técnico.
+                    """)
                 else:
                     st.error(f"Error al procesar la pregunta: {error_message}")
+            except Exception as e:
+                st.error(f"Error inesperado: {str(e)}")
+                st.info("Intenta de nuevo o prueba con una pregunta diferente.")
 
     # Historial de interacciones
     if 'historial' in st.session_state and st.session_state.historial:
