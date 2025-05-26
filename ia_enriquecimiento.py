@@ -6,20 +6,24 @@ import io
 
 def run_ia_enriquecimiento():
     st.title("🤖 Limpieza y Enriquecimiento de Datos con IA")
-    
-    # Obtener API key
+      # Obtener API key
     api_key = get_api_key("openai")
     
     # Verificar si existe API key
     if not api_key:
-        st.warning("⚠️ No se ha configurado la clave API de OpenAI.")
-        api_key = st.text_input("Ingresa tu clave API de OpenAI:", type="password")
+        st.warning("⚠️ No se ha encontrado la clave API de OpenAI en la configuración.")
+        api_key = st.text_input(
+            "Ingresa tu clave API de OpenAI:",
+            type="password",
+            help="La clave API se guardará solo para esta sesión."
+        )
         if not api_key:
             st.error("Se requiere una clave API para continuar.")
             st.stop()
         else:
             # Guardar en session_state para uso futuro
             st.session_state["openai_api_key"] = api_key
+            st.success("✅ Clave API guardada para esta sesión.")
     
     # Configuración
     cliente = OpenAI(api_key=api_key)

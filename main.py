@@ -17,8 +17,21 @@ def make_api_request(pregunta: str) -> dict:
     api_url = get_api_url("redpill")
     
     if not api_key:
-        st.error("🔑 No se ha configurado la clave API de Redpill. Configúrala en .streamlit/secrets.toml")
-        st.stop()
+        # Intentar obtener la clave API del usuario
+        st.warning("🔑 No se ha encontrado la clave API de Redpill en la configuración.")
+        api_key = st.text_input(
+            "Ingresa tu clave API de Redpill:",
+            type="password",
+            help="La clave API se guardará solo para esta sesión."
+        )
+        
+        if not api_key:
+            st.error("Se requiere una clave API para continuar con el asistente conversacional.")
+            st.info("Puedes seguir usando otras funcionalidades de la aplicación que no requieren API.")
+            st.stop()
+        else:
+            # Guardar en session_state para esta sesión
+            st.session_state["redpill_api_key"] = api_key
     
     headers = {
         "Authorization": f"Bearer {api_key}",
