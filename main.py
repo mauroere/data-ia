@@ -64,7 +64,7 @@ if st.sidebar.button("🔄 Reiniciar Sesión"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.sidebar.success("Sesión reiniciada correctamente")
-    st.experimental_rerun()
+    st.rerun()
 
 # Seleccionar función a mostrar
 navegacion = show_navigation()

@@ -103,12 +103,11 @@ def mostrar_login():
         elif st.session_state.usuarios[username]["password"] != password:
             st.error("Contraseña incorrecta")
             registrar_actividad("intento_login_fallido", f"Usuario: {username}")
-        else:
-            # Login exitoso
+        else:            # Login exitoso
             st.session_state.usuario_actual = username
             registrar_actividad("login_exitoso")
             st.success(f"Bienvenido, {st.session_state.usuarios[username]['nombre']}!")
-            st.experimental_rerun()
+            st.rerun()
     
     # Opción para registrarse
     st.markdown("---")
@@ -123,11 +122,10 @@ def mostrar_panel_usuario():
     # Información de usuario
     st.sidebar.success(f"Usuario: {datos_usuario['nombre']}")
     st.sidebar.info(f"Rol: {datos_usuario['rol']}")
-    
-    if st.sidebar.button("Cerrar sesión"):
+      if st.sidebar.button("Cerrar sesión"):
         registrar_actividad("logout")
         st.session_state.usuario_actual = None
-        st.experimental_rerun()
+        st.rerun()
     
     # Mostrar diferentes secciones según el rol
     tabs = ["Mi perfil"]
@@ -193,11 +191,10 @@ def mostrar_panel_usuario():
                             "nombre": new_name,
                             "rol": new_role,
                             "fecha_creacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        }
-                        
+                        }                        
                         registrar_actividad("crear_usuario", f"Usuario creado: {new_username}, Rol: {new_role}")
                         st.success(f"Usuario {new_username} creado correctamente")
-                        st.experimental_rerun()
+                        st.rerun()
     
     # Tab Log de auditoría (solo para admins)
     if verificar_acceso("ver_auditoria") and "ver_auditoria" in tabs:
