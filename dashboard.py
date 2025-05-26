@@ -1,46 +1,79 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+from utils import read_flexible_file
 
+def run_dashboard():
+    st.title("📈 Visualización de Datos")
 
-def read_flexible_file(uploaded_file):
-    import pandas as pd
-    import chardet
+    uploaded_file = st.file_uploader("📁 Subí la base", type=["csv", "xls", "xlsx"])
+    if uploaded_file:
+        df = read_flexible_file(uploaded_file)
+        
+        # Mostrar estadísticas básicas
+        st.subheader("📊 Estadísticas básicas")
+        st.write(f"Filas: {df.shape[0]}, Columnas: {df.shape[1]}")
+        
+        # Filtrado por columna
+        col = st.selectbox("Filtrar por columna", df.columns)
+        if df[col].nunique() > 50:
+            # Si hay muchos valores, usar un text_input para buscar
+            val_input = st.text_input(f"Escribe un valor para filtrar en '{col}':")
+            if val_input:
+                subset = df[df[col].astype(str).str.contains(val_input, case=False)]
+            else:
+                subset = df
+        else:
+            # Si hay pocos valores, usar un selectbox
+            val = st.selectbox("Seleccioná un valor", ["Todos"] + list(df[col].dropna().unique()))
+            if val == "Todos":
+                subset = df
+            else:
+                subset = df[df[col] == val]
+        
+        st.dataframe(subset)
 
-    file_name = uploaded_file.name.lower()
-    if file_name.endswith(".xlsx") or file_name.endswith(".xls"):
-        return pd.read_excel(uploaded_file)
+        # Métricas para gráficos
+        st.subheader("📈 Visualización")
+        metric_cols = st.multiselect("Selecciona columnas para visualizar", df.columns)
+        
+        for metric in metric_cols:
+            if df[metric].dtype in ['int64', 'float64']:
+                # Para columnas numéricas
+                st.write(f"Histograma de {metric}")
+                chart = alt.Chart(df).mark_bar().encode(
+                    alt.X(f"{metric}:Q", bin=True),
+                    y='count()'
+                ).properties(width=600)
+                st.altair_chart(chart, use_container_width=True)
+            else:
+                # Para columnas categóricas
+                value_counts = df[metric].value_counts().reset_index()
+                value_counts.columns = ["Valor", "Cantidad"]
+                
+                if len(value_counts) > 20:
+                    # Mostrar solo los 20 más frecuentes
+                    value_counts = value_counts.head(20)
+                    st.write(f"Top 20 valores más frecuentes en {metric}")
+                else:
+                    st.write(f"Distribución de valores en {metric}")
+                
+                chart = alt.Chart(value_counts).mark_bar().encode(
+                    x=alt.X("Valor:N", sort='-y'),
+                    y="Cantidad:Q",
+                    tooltip=["Valor", "Cantidad"]
+                ).properties(width=600)
+                st.altair_chart(chart, use_container_width=True)
+        
+        # Exportar subset
+        if st.button("Exportar datos filtrados"):
+            st.download_button(
+                "📥 Descargar CSV", 
+                subset.to_csv(index=False), 
+                "datos_filtrados.csv", 
+                "text/csv"
+            )
 
-    rawdata = uploaded_file.read()
-    uploaded_file.seek(0)
-    result = chardet.detect(rawdata)
-    encoding = result['encoding']
-
-    try_separators = [',', ';', '\t']
-    for sep in try_separators:
-        try:
-            df = pd.read_csv(uploaded_file, sep=sep, encoding=encoding)
-            if df.shape[1] > 1:
-                return df
-        except Exception:
-            uploaded_file.seek(0)
-    uploaded_file.seek(0)
-    return pd.read_csv(uploaded_file, encoding=encoding)
-
-
-st.set_page_config(page_title="📊 Dashboard", layout="wide")
-st.title("📈 Visualización de Datos")
-
-uploaded_file = st.file_uploader("📁 Subí la base", type=["csv", "xls", "xlsx"])
-if uploaded_file:
-    df = read_flexible_file(uploaded_file)
-    col = st.selectbox("Filtrar por columna", df.columns)
-    val = st.selectbox("Seleccioná un valor", df[col].dropna().unique())
-    subset = df[df[col] == val]
-    st.dataframe(subset)
-
-    metric = st.selectbox("Métrica para gráfico", df.columns)
-    chart = alt.Chart(df[metric].value_counts().reset_index()).mark_bar().encode(
-        x="index", y=metric, tooltip=["index", metric]
-    )
-    st.altair_chart(chart, use_container_width=True)
+if __name__ == "__main__":
+    st.set_page_config(page_title="📊 Dashboard", layout="wide")
+    run_dashboard()
