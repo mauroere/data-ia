@@ -4,9 +4,14 @@ import json
 import os
 import warnings
 import requests
+import traceback
 from typing import Optional
 from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url
 from api_proxy import make_api_request_proxy
+from api_cache import get_api_cache
+
+# Inicializar el sistema de caché
+api_cache = get_api_cache(ttl_hours=24)
 
 def make_api_request(pregunta: str) -> dict:
     """Realiza una petición a la API de Redpill.io usando un proxy personalizado"""
@@ -30,18 +35,48 @@ def make_api_request(pregunta: str) -> dict:
             # Guardar en session_state para esta sesión
             st.session_state["redpill_api_key"] = api_key
     
+    # Crear datos para buscar en caché
+    cache_data = {
+        "messages": [{"role": "user", "content": pregunta}],
+        "model": "redpill-llama-3-8b-chat",
+        "temperature": 0.7
+    }
+    
+    # Verificar si hay respuesta en caché
+    cached_response = api_cache.get(cache_data)
+    if cached_response:
+        st.success("🔄 Usando respuesta almacenada en caché")
+        return cached_response
+    
     try:
         # Utilizamos el proxy de API para manejar mejor los problemas de SSL
         messages = [{"role": "user", "content": pregunta}]
-        return make_api_request_proxy(
+        response = make_api_request_proxy(
             api_key=api_key,
             api_url=api_url,
             messages=messages,
             model="redpill-llama-3-8b-chat",
-            temperature=0.7
+            temperature=0.7,
+            use_cache=True  # Usar caché interno del proxy también
         )
+        
+        # Guardar en caché
+        api_cache.set(cache_data, response)
+        
+        return response
     except Exception as e:
-        st.error(f"Error de conexión: {str(e)}")
+        error_msg = str(e)
+        st.error(f"Error de conexión: {error_msg}")
+        
+        # Opciones de diagnóstico si ocurre un error SSL
+        if "TLSV1_UNRECOGNIZED_NAME" in error_msg or "SSL" in error_msg:
+            st.warning("🛠️ Se detectó un problema de SSL. Prueba el diagnóstico de SSL para resolver el problema.")
+            if st.button("Ejecutar diagnóstico SSL"):
+                st.session_state["navegacion"] = "🔍 Diagnóstico API"
+                st.rerun()
+        
+        # Logging detallado del error
+        st.expander("Detalles del error").code(traceback.format_exc())
         raise
 
 # Configuración de la página
@@ -64,8 +99,24 @@ if st.sidebar.button("🔄 Reiniciar Sesión"):
     st.sidebar.success("Sesión reiniciada correctamente")
     st.rerun()
 
+# Opciones de caché (en el sidebar)
+with st.sidebar.expander("🔄 Opciones de caché"):
+    if st.button("Limpiar caché expirada"):
+        removed = api_cache.clear_expired()
+        st.success(f"Se eliminaron {removed} archivos de caché expirados")
+    
+    if st.button("Limpiar toda la caché"):
+        removed = api_cache.clear_all()
+        st.success(f"Se eliminaron {removed} archivos de caché")
+    
+    # Mostrar estadísticas de caché
+    stats = api_cache.get_stats()
+    st.write(f"Archivos en caché: {stats['file_count']}")
+    st.write(f"Tamaño total: {stats['total_size_mb']} MB")
+
 # Seleccionar función a mostrar
-navegacion = show_navigation()
+navegacion = st.session_state.get("navegacion") or show_navigation()
+st.session_state["navegacion"] = navegacion
 
 if navegacion == "🔄 Cruce Inteligente":
     st.title("🔄 Cruce Inteligente de Datos")
@@ -189,6 +240,14 @@ elif navegacion == "👥 Control de Accesos":
     run_colaboracion()
     
 elif navegacion == "🔍 Diagnóstico API":
-    # Importar y ejecutar el código de diagnóstico de API
-    from api_diagnostico import display_connection_test
-    display_connection_test()
+    st.title("🔍 Diagnóstico de API y SSL")
+    
+    diagnostic_tab1, diagnostic_tab2 = st.tabs(["Diagnóstico de API", "Diagnóstico SSL"])
+    
+    with diagnostic_tab1:
+        from api_diagnostico import display_connection_test
+        display_connection_test()
+    
+    with diagnostic_tab2:
+        from ssl_diagnostico import display_ssl_diagnostics
+        display_ssl_diagnostics()

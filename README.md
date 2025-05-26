@@ -1,6 +1,6 @@
 # 🧠 Plataforma Inteligente de Gestión de Empleados con IA
 
-Este proyecto es una aplicación de escritorio web desarrollada en Python + Streamlit que permite importar, auditar, cruzar, editar y enriquecer bases de datos de empleados con ayuda de inteligencia artificial (OpenAI GPT-4).
+Este proyecto es una aplicación de escritorio web desarrollada en Python + Streamlit que permite importar, auditar, cruzar, editar y enriquecer bases de datos de empleados con ayuda de inteligencia artificial (Redpill.io LLM).
 
 ---
 
@@ -10,17 +10,19 @@ Este proyecto es una aplicación de escritorio web desarrollada en Python + Stre
 - **📊 Dashboard**: visualización interactiva con filtros por columnas y gráficos dinámicos.
 - **✏️ Editor de datos**: tabla editable directamente desde la interfaz y exportación del resultado.
 - **📤 Exportador**: exportación filtrada de la base por columna y valor en CSV, Excel o JSON.
-- **🤖 Enriquecimiento IA**: permite pegar datos no estructurados para que GPT-4 los limpie y estructure automáticamente.
+- **🤖 Enriquecimiento IA**: permite pegar datos no estructurados para que la IA los limpie y estructure automáticamente.
 - **💬 Asistente conversacional**: interfaz para consultar a la IA sobre la base cargada, con historial de preguntas y respuestas.
 - **🕓 Historial IA exportable**: el historial de interacciones con la IA se guarda en sesión y puede descargarse como CSV.
 - **🔄 Reinicio rápido**: botón que permite reiniciar la sesión y limpiar todos los datos cargados.
+- **🔍 Diagnóstico de API/SSL**: herramientas avanzadas para diagnosticar y resolver problemas de conexión SSL.
+- **📝 Sistema de caché**: reduce la necesidad de conectarse a la API y mejora el rendimiento.
 
 ---
 
 ## 🛠️ Requisitos técnicos
 
 - Python 3.8 o superior
-- Cuenta en OpenAI con clave de API (GPT-4)
+- Cuenta en Redpill.io con clave de API
 - Librerías (ya incluidas en `requirements.txt`):
 
 ```txt
@@ -28,13 +30,14 @@ streamlit
 pandas
 sqlalchemy
 psycopg2-binary
-openai
+requests
 fuzzywuzzy
 python-Levenshtein
 altair
 xlsxwriter
 chardet
 openpyxl
+urllib3
 ```
 
 ---
