@@ -86,9 +86,7 @@ def make_api_request_proxy(api_key, api_url, messages, model="mistralai/ministra
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    
-    payload = {
+    }    payload = {
         "model": model,
         "messages": messages,
         "temperature": temperature,
