@@ -36,8 +36,9 @@ def make_api_request(pregunta: str) -> dict:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
-          payload = {
-            "model": "mistralai/ministral-8b",
+        
+        payload = {
+            "model": "redpill-llama-3-8b-chat",
             "messages": [{"role": "user", "content": pregunta}],
             "temperature": 0.7,
             "max_tokens": 1000
