@@ -81,12 +81,13 @@ def make_api_request_proxy(api_key, api_url, messages, model="mistralai/ministra
                         return json.load(f)
             except Exception as cache_error:
                 print(f"Error al leer caché: {str(cache_error)}")
-    
-    headers = {
+      headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }    payload = {
+    }
+    
+    payload = {
         "model": model,
         "messages": messages,
         "temperature": temperature,
