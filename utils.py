@@ -111,7 +111,8 @@ def get_api_url(service="redpill"):
         
     Returns:
         str: URL de la API
-    """    try:
+    """
+    try:
         return st.secrets[service]["api_url"]
     except (KeyError, FileNotFoundError):
         # Valores por defecto si no se encuentran en los secretos
