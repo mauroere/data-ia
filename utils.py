@@ -117,7 +117,7 @@ def get_api_url(service="redpill"):
     except (KeyError, FileNotFoundError):
         # Valores por defecto si no se encuentran en los secretos
         if service == "redpill":
-            return "https://api.redpill.ai/v1/chat/completions"
+            return "https://api.redpill.ai/v1/completions"
         elif service == "openai":
             return "https://api.openai.com/v1/chat/completions"
         return ""

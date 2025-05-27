@@ -4,14 +4,9 @@ import json
 import os
 import warnings
 import requests
-import traceback
 from typing import Optional
 from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url
 from api_proxy import make_api_request_proxy
-from api_cache import get_api_cache
-
-# Inicializar el sistema de caché
-api_cache = get_api_cache(ttl_hours=24)
 
 def make_api_request(pregunta: str) -> dict:
     """Realiza una petición a la API de Redpill.io usando un proxy personalizado"""
@@ -35,48 +30,30 @@ def make_api_request(pregunta: str) -> dict:
             # Guardar en session_state para esta sesión
             st.session_state["redpill_api_key"] = api_key
     
-    # Crear datos para buscar en caché
-    cache_data = {
-        "messages": [{"role": "user", "content": pregunta}],
-        "model": "redpill-llama-3-8b-chat",
-        "temperature": 0.7
-    }
-    
-    # Verificar si hay respuesta en caché
-    cached_response = api_cache.get(cache_data)
-    if cached_response:
-        st.success("🔄 Usando respuesta almacenada en caché")
-        return cached_response
-    
     try:
-        # Utilizamos el proxy de API para manejar mejor los problemas de SSL
-        messages = [{"role": "user", "content": pregunta}]
-        response = make_api_request_proxy(
-            api_key=api_key,
-            api_url=api_url,
-            messages=messages,
-            model="redpill-llama-3-8b-chat",
-            temperature=0.7,
-            use_cache=True  # Usar caché interno del proxy también
+        # Uso de la biblioteca requests con verificación SSL desactivada
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+          payload = {
+            "model": "mistralai/ministral-8b",
+            "messages": [{"role": "user", "content": pregunta}],
+            "temperature": 0.7,
+            "max_tokens": 1000
+        }
+        
+        response = requests.post(
+            api_url,
+            headers=headers,
+            json=payload,
+            verify=False,  # Desactivar verificación SSL
+            timeout=30.0   # Timeout en segundos
         )
-        
-        # Guardar en caché
-        api_cache.set(cache_data, response)
-        
-        return response
-    except Exception as e:
-        error_msg = str(e)
-        st.error(f"Error de conexión: {error_msg}")
-        
-        # Opciones de diagnóstico si ocurre un error SSL
-        if "TLSV1_UNRECOGNIZED_NAME" in error_msg or "SSL" in error_msg:
-            st.warning("🛠️ Se detectó un problema de SSL. Prueba el diagnóstico de SSL para resolver el problema.")
-            if st.button("Ejecutar diagnóstico SSL"):
-                st.session_state["navegacion"] = "🔍 Diagnóstico API"
-                st.rerun()
-        
-        # Logging detallado del error
-        st.expander("Detalles del error").code(traceback.format_exc())
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        st.error(f"Error de conexión: {str(e)}")
         raise
 
 # Configuración de la página
@@ -88,7 +65,7 @@ def show_navigation():
     option = st.sidebar.radio(
         "Selecciona una función:",
         ["🔄 Cruce Inteligente", "📊 Dashboard", "✏️ Editor", "📤 Exportador", 
-         "🤖 Enriquecimiento IA", "🗺️ Mapeo de Datos", "👥 Control de Accesos", "🔍 Diagnóstico API"]
+         "🤖 Enriquecimiento IA", "🗺️ Mapeo de Datos", "👥 Control de Accesos"]
     )
     return option
 
@@ -99,24 +76,8 @@ if st.sidebar.button("🔄 Reiniciar Sesión"):
     st.sidebar.success("Sesión reiniciada correctamente")
     st.rerun()
 
-# Opciones de caché (en el sidebar)
-with st.sidebar.expander("🔄 Opciones de caché"):
-    if st.button("Limpiar caché expirada"):
-        removed = api_cache.clear_expired()
-        st.success(f"Se eliminaron {removed} archivos de caché expirados")
-    
-    if st.button("Limpiar toda la caché"):
-        removed = api_cache.clear_all()
-        st.success(f"Se eliminaron {removed} archivos de caché")
-    
-    # Mostrar estadísticas de caché
-    stats = api_cache.get_stats()
-    st.write(f"Archivos en caché: {stats['file_count']}")
-    st.write(f"Tamaño total: {stats['total_size_mb']} MB")
-
 # Seleccionar función a mostrar
-navegacion = st.session_state.get("navegacion") or show_navigation()
-st.session_state["navegacion"] = navegacion
+navegacion = show_navigation()
 
 if navegacion == "🔄 Cruce Inteligente":
     st.title("🔄 Cruce Inteligente de Datos")
@@ -170,7 +131,8 @@ if navegacion == "🔄 Cruce Inteligente":
                     
                     Para resolver esto:
                     1. Verifica tu saldo en el panel de control de Redpill.io
-                    2. Actualiza tu plan o agrega fondos a tu cuenta                    3. Si estás usando una API key de prueba, considera obtener una nueva
+                    2. Actualiza tu plan o agrega fondos a tu cuenta
+                    3. Si estás usando una API key de prueba, considera obtener una nueva
                     
                     Mientras tanto, puedes seguir usando las otras funcionalidades de la aplicación.
                     """)
@@ -181,16 +143,10 @@ if navegacion == "🔄 Cruce Inteligente":
                     Esto podría deberse a:
                     1. Problemas de red o firewall
                     2. Certificados SSL obsoletos o inválidos
-                    3. Problemas con el nombre del servidor (TLSV1_UNRECOGNIZED_NAME)
                     
-                    Puedes usar la herramienta de diagnóstico de la API en la sección '🔍 Diagnóstico API' 
-                    para obtener más información sobre el problema.
+                    Hemos configurado la aplicación para usar conexiones no verificadas, por favor intenta nuevamente.
+                    Si el problema persiste, contacta al soporte técnico.
                     """)
-                    # Ofrecer diagnóstico directo
-                    if st.button("Ejecutar diagnóstico de conexión"):
-                        from api_diagnostico import test_api_connection
-                        result = test_api_connection(get_api_url("redpill"), get_api_key("redpill"))
-                        st.json(result)
                 else:
                     st.error(f"Error al procesar la pregunta: {error_message}")
             except Exception as e:
@@ -238,16 +194,3 @@ elif navegacion == "👥 Control de Accesos":
     # Importar y ejecutar el código de control de accesos
     from colaboracion import run_colaboracion
     run_colaboracion()
-    
-elif navegacion == "🔍 Diagnóstico API":
-    st.title("🔍 Diagnóstico de API y SSL")
-    
-    diagnostic_tab1, diagnostic_tab2 = st.tabs(["Diagnóstico de API", "Diagnóstico SSL"])
-    
-    with diagnostic_tab1:
-        from api_diagnostico import display_connection_test
-        display_connection_test()
-    
-    with diagnostic_tab2:
-        from ssl_diagnostico import display_ssl_diagnostics
-        display_ssl_diagnostics()

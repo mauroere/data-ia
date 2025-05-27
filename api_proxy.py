@@ -35,7 +35,7 @@ def resolve_ip(hostname):
         # Si no se puede resolver, devolver el hostname original
         return hostname
 
-def make_api_request_proxy(api_key, api_url, messages, model="redpill-llama-3-8b-chat", temperature=0.3, use_cache=True):
+def make_api_request_proxy(api_key, api_url, messages, model="mistralai/ministral-8b", temperature=0.3, use_cache=True):
     """
     Realiza una petición a la API usando una configuración SSL personalizada
     

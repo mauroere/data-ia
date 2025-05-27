@@ -62,10 +62,9 @@ def test_api_connection(api_url, api_key):
 def display_connection_test():
     """Muestra una interfaz para probar la conexión API"""
     st.title("🔍 Diagnóstico de Conexión API")
-    
-    # Obtener valores de API
+      # Obtener valores de API
     api_url = st.text_input(        "URL de API", 
-        value="https://api.redpill.ai/v1/chat/completions",
+        value="https://api.redpill.ai/v1/completions",
         help="URL completa del endpoint de la API"
     )
     
