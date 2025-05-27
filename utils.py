@@ -121,23 +121,3 @@ def get_api_url(service="redpill"):
         elif service == "openai":
             return "https://api.openai.com/v1/chat/completions"
         return ""
-
-def get_api_model(service="redpill"):
-    """
-    Obtiene el nombre del modelo desde los secretos de Streamlit.
-    
-    Args:
-        service (str): Nombre del servicio
-        
-    Returns:
-        str: Nombre del modelo a utilizar
-    """
-    try:
-        return st.secrets[service]["model"]
-    except (KeyError, FileNotFoundError):
-        # Valores por defecto si no se encuentran en los secretos
-        if service == "redpill":
-            return "mistralai/ministral-8b"
-        elif service == "openai":
-            return "gpt-3.5-turbo"
-        return ""
