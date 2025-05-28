@@ -175,17 +175,22 @@ if navegacion == "🔄 Cruce Inteligente":
                     file_name=f"resultados_cruce_{uploaded_file_1.name}_{uploaded_file_2.name}.csv",
                     mime="text/csv"
                 )
-    
-    # Separador antes del asistente de datos
+      # Separador antes del asistente de cruce inteligente
     st.divider()
-      # Asistente de datos con UI/UX mejorada
+    
+    # Usar el asistente especializado para el cruce inteligente
     try:
-        from asistente_datos_mejorado import run_data_assistant
-        run_data_assistant()
-    except ImportError:
-        # Si el módulo mejorado no está disponible, usar el asistente estándar
-        from asistente_datos import run_asistente_datos
-        run_asistente_datos()
+        from asistente_cruce_inteligente import run_asistente_cruce_inteligente
+        run_asistente_cruce_inteligente()
+    except ImportError as e:
+        st.error(f"Error al cargar el asistente de cruce inteligente: {str(e)}")
+        # Si el módulo especializado no está disponible, usar el asistente estándar
+        try:
+            from asistente_datos_mejorado import run_data_assistant
+            run_data_assistant()
+        except ImportError:
+            from asistente_datos import run_asistente_datos
+            run_asistente_datos()
 
 # Aquí comenzará el código para las otras páginas
 elif navegacion == "📊 Dashboard":
