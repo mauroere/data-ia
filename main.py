@@ -45,10 +45,10 @@ def make_api_request(pregunta: str) -> dict:
             st.error("Se requiere una clave API para continuar con el asistente conversacional.")
             st.info("Puedes seguir usando otras funcionalidades de la aplicación que no requieren API.")
             st.stop()
-        else:
-            # Guardar en session_state para esta sesión
+        else:            # Guardar en session_state para esta sesión
             st.session_state["redpill_api_key"] = api_key
-      try:
+    
+    try:
         # Uso de la biblioteca requests con verificación SSL desactivada
         headers = {
             "Content-Type": "application/json",
