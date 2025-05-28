@@ -10,7 +10,7 @@ import json
 from typing import Dict, List, Any, Optional, Tuple
 from api_context import make_api_request_agente, generar_contexto_datos
 from api_fix import ensure_api_key_exists
-from ui_components import chat_message, stat_card, data_card, loading_animation
+from ui_components import stat_card, loading_animation, chat_message, data_card
 
 # Asegurar que la API key esté disponible
 ensure_api_key_exists()

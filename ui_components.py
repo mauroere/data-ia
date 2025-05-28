@@ -285,3 +285,51 @@ def analysis_card(title: str, content: str, icon: str = "📊"):
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+# Función para mostrar mensajes de chat estilizados
+def chat_message(message: str, is_user: bool = False):
+    """
+    Muestra un mensaje de chat con estilo.
+    
+    Args:
+        message: Contenido del mensaje
+        is_user: True si el mensaje es del usuario, False si es del asistente
+    """
+    if is_user:
+        st.markdown(f"""
+        <div style="padding: 1.2rem; border-radius: 0.75rem; margin-bottom: 1rem; 
+                    background-color: #F0F2F6; border-left: 5px solid #FF4B4B; 
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+            <div style="font-weight: bold; color: #FF4B4B; margin-bottom: 0.5rem;">👤 Usuario</div>
+            <div>{message}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="padding: 1.2rem; border-radius: 0.75rem; margin-bottom: 1rem; 
+                    background-color: #F8F9FD; border-left: 5px solid #0068C9; 
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+            <div style="font-weight: bold; color: #0068C9; margin-bottom: 0.5rem;">🤖 Asistente</div>
+            <div>{message}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+# Función para mostrar tarjetas de datos
+def data_card(title: str, content: str, footer: str = None):
+    """
+    Muestra una tarjeta de datos con título y contenido.
+    
+    Args:
+        title: Título de la tarjeta
+        content: Contenido principal
+        footer: Pie de la tarjeta (opcional)
+    """
+    footer_html = f"""<div style="margin-top: 0.75rem; font-size: 0.8rem; color: #6C757D;">{footer}</div>""" if footer else ""
+    
+    st.markdown(f"""
+    <div style="border: 1px solid #E0E4EB; border-radius: 0.5rem; padding: 1rem; margin: 1rem 0;">
+        <div style="font-weight: 600; margin-bottom: 0.75rem; color: #262730;">{title}</div>
+        <div>{content}</div>
+        {footer_html}
+    </div>
+    """, unsafe_allow_html=True)
