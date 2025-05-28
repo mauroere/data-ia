@@ -15,14 +15,14 @@ El Modo Agente se implementa a través de la función `make_api_request_agente()
 
 ## Diferencias clave con el modo chat
 
-| Característica       | Modo Chat | Modo Agente                   |
-| -------------------- | --------- | ----------------------------- |
-| Temperatura          | 0.7       | 0.3 (más determinístico)      |
-| Tokens máximos       | 1000      | 1500                          |
-| Instrucciones        | Generales | Específicas y estructuradas   |
-| Formato de respuesta | Libre     | Estructurado en secciones     |
-| Comportamiento       | Reactivo  | Proactivo con recomendaciones |
-| Response Format      | No especificado | `{"type": "text"}`      |
+| Característica       | Modo Chat       | Modo Agente                   |
+| -------------------- | --------------- | ----------------------------- |
+| Temperatura          | 0.7             | 0.3 (más determinístico)      |
+| Tokens máximos       | 1000            | 1500                          |
+| Instrucciones        | Generales       | Específicas y estructuradas   |
+| Formato de respuesta | Libre           | Estructurado en secciones     |
+| Comportamiento       | Reactivo        | Proactivo con recomendaciones |
+| Response Format      | No especificado | `{"type": "text"}`            |
 
 ## Instrucciones Especializadas
 
@@ -54,6 +54,7 @@ IMPORTANTE: DEBES responder SIEMPRE utilizando EXACTAMENTE el siguiente formato 
 - [Más recomendaciones si corresponde]
 """
 ```
+
 3. La adaptación de la interfaz de usuario para reflejar el nuevo paradigma de agente
 4. La actualización del formato de visualización usando markdown en lugar de texto plano
 

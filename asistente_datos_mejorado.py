@@ -10,7 +10,7 @@ import json
 import random
 import requests
 from typing import Dict, List, Any, Optional, Tuple
-from api_context import make_api_request_agente, generar_contexto_datos
+from api_context_fixed import make_api_request_agente, generar_contexto_datos
 from api_fix import ensure_api_key_exists
 
 # Asegurar que la API key esté disponible

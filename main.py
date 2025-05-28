@@ -8,7 +8,8 @@ import requests
 from typing import Optional
 from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url
 from api_proxy import make_api_request_proxy
-from api_context import make_api_request_contexto, make_api_request_agente, guardar_dataframes_en_sesion
+# Usar la versión corregida del archivo api_context
+from api_context_fixed import make_api_request_contexto, make_api_request_agente, guardar_dataframes_en_sesion
 # Importar el arreglo para la API key
 from api_fix import ensure_api_key_exists
 
