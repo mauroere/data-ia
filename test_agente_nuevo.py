@@ -107,7 +107,8 @@ def make_api_request_agente(pregunta: str):
     El usuario ha seleccionado 'nombre' como campo clave para el cruce.
     Se han encontrado 5 coincidencias entre los archivos.
     """
-      # Instrucciones específicas para el modo agente - versión actualizada más explícita
+    
+    # Instrucciones específicas para el modo agente - versión actualizada más explícita
     instrucciones_agente = """
     Actúa como un agente de análisis de datos especializado que puede:
     1. Interpretar datos y realizar análisis básicos
@@ -138,19 +139,22 @@ def make_api_request_agente(pregunta: str):
     
     # Enriquecer la pregunta con el contexto y las instrucciones del agente
     pregunta_enriquecida = f"{contexto}\n\n{instrucciones_agente}\n\nConsulta/Instrucción del usuario: {pregunta}\n\n"
-      try:
+    
+    try:
         print("Enviando solicitud a la API...")
         # Uso de la biblioteca requests con verificación SSL desactivada
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
-        }        
+        }
+        
         payload = {
             "model": "mistralai/ministral-8b",
             "messages": [
                 {"role": "system", "content": "Eres un agente inteligente especializado en análisis de datos que ayuda a los usuarios a trabajar con archivos CSV y Excel. Puedes analizar, interpretar y actuar sobre los datos proporcionados. DEBES responder SIEMPRE utilizando un formato ESTRUCTURADO con tres secciones: ANÁLISIS, HALLAZGOS y RECOMENDACIONES. Nunca respondas en formato de chat informal."},
                 {"role": "user", "content": pregunta_enriquecida}
-            ],            "temperature": 0.3,  # Temperatura más baja para respuestas más determinísticas
+            ],
+            "temperature": 0.3,  # Temperatura más baja para respuestas más determinísticas
             "max_tokens": 1500,   # Aumentado para permitir respuestas más detalladas
             "response_format": {"type": "text"}  # Asegurar que la respuesta sea texto
         }
