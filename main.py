@@ -48,14 +48,13 @@ def make_api_request(pregunta: str) -> dict:
         else:
             # Guardar en session_state para esta sesión
             st.session_state["redpill_api_key"] = api_key
-    
-    try:
+      try:
         # Uso de la biblioteca requests con verificación SSL desactivada
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
-          payload = {
+        payload = {
             "model": "mistralai/ministral-8b",
             "messages": [{"role": "user", "content": pregunta}],
             "temperature": 0.7,
