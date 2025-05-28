@@ -142,6 +142,109 @@ def make_api_request_contexto(pregunta: str) -> dict:
         st.error(f"Error de conexión: {str(e)}")
         raise
 
+def make_api_request_agente(pregunta: str) -> dict:
+    """
+    Realiza una petición a la API de Redpill en modo agente, permitiendo un procesamiento
+    más autónomo y orientado a tareas con los datos cargados.
+    
+    Args:
+        pregunta (str): Pregunta o instrucción del usuario
+        
+    Returns:
+        dict: Respuesta de la API
+    """
+    api_key = get_api_key("redpill")
+    api_url = get_api_url("redpill")
+    
+    if not api_key:
+        # Intentar obtener la clave API del usuario
+        st.warning("🔑 No se ha encontrado la clave API de Redpill en la configuración.")
+        
+        # Mostrar información adicional para ayudar a solucionar el problema
+        with st.expander("ℹ️ Información para solucionar problemas"):
+            st.markdown("""
+            ### Posibles causas:
+            1. **Archivo de secretos no encontrado** - Verifica que existe el archivo `.streamlit/secrets.toml`
+            2. **Formato incorrecto** - El archivo debe usar el formato TOML correcto:
+            ```toml
+            [redpill]
+            api_key = "tu-clave-api"
+            api_url = "https://api.redpill.ai/v1/chat/completions"
+            ```
+            3. **Permisos de archivo** - Verifica que la aplicación tiene permisos para leer el archivo
+            
+            ### Herramientas de diagnóstico:
+            - Ejecuta `python debug_secrets.py` para diagnosticar problemas con el archivo de secretos
+            - Ejecuta `python test_conexion_redpill_basic.py` para probar la conexión con la API
+            """)
+        
+        api_key = st.text_input(
+            "Ingresa tu clave API de Redpill:",
+            type="password",
+            help="La clave API se guardará solo para esta sesión."
+        )
+        
+        if not api_key:
+            st.error("Se requiere una clave API para continuar con el asistente de datos.")
+            st.info("Puedes seguir usando otras funcionalidades de la aplicación que no requieren API.")
+            st.stop()
+        else:
+            # Guardar en session_state para esta sesión
+            st.session_state["redpill_api_key"] = api_key
+    
+    # Generar contexto basado en los datos cargados
+    contexto = generar_contexto_datos()
+    
+    # Instrucciones específicas para el modo agente
+    instrucciones_agente = """
+    Actúa como un agente de análisis de datos que puede:
+    1. Interpretar datos y realizar análisis básicos
+    2. Buscar patrones, correlaciones y tendencias en los datos
+    3. Sugerir acciones específicas basadas en el análisis
+    4. Responder a consultas técnicas sobre los datos
+    5. Explicar el significado de los resultados del cruce de datos
+    6. Proponer nuevos análisis o cruces que podrían ser útiles
+    
+    Cuando respondas, sigue este formato:
+    1. 📊 ANÁLISIS: Breve resumen de tu interpretación de los datos
+    2. 🔍 HALLAZGOS: Enumera los principales hallazgos o conclusiones
+    3. 📈 RECOMENDACIONES: Sugiere acciones concretas o análisis adicionales
+    
+    Usa lenguaje técnico pero comprensible y responde siempre en español.
+    """
+    
+    # Enriquecer la pregunta con el contexto de la aplicación y las instrucciones del agente
+    pregunta_enriquecida = f"{contexto}\n\n{instrucciones_agente}\n\nConsulta/Instrucción del usuario: {pregunta}\n\n"
+    
+    try:
+        # Uso de la biblioteca requests con verificación SSL desactivada
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+        payload = {
+            "model": "mistralai/ministral-8b",
+            "messages": [
+                {"role": "system", "content": "Eres un agente inteligente especializado en análisis de datos que ayuda a los usuarios a trabajar con archivos CSV y Excel. Puedes analizar, interpretar y actuar sobre los datos proporcionados. Debes responder en español siguiendo un formato estructurado."},
+                {"role": "user", "content": pregunta_enriquecida}
+            ],
+            "temperature": 0.5,  # Reducida para respuestas más precisas y estructuradas
+            "max_tokens": 1500   # Aumentado para permitir respuestas más detalladas
+        }
+        
+        response = requests.post(
+            api_url,
+            headers=headers,
+            json=payload,
+            verify=False,  # Desactivar verificación SSL
+            timeout=30.0   # Timeout en segundos
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        st.error(f"Error de conexión: {str(e)}")
+        raise
+
 def guardar_dataframes_en_sesion(base_df: pd.DataFrame, new_df: pd.DataFrame, campo_clave: Optional[str] = None, coincidencias: Optional[List] = None):
     """
     Guarda los DataFrames en la sesión para que puedan ser utilizados por el asistente conversacional.

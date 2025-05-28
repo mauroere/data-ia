@@ -1,4 +1,3 @@
-﻿# filepath: c:\Users\rementeriama\Downloads\Code\data-ia\main.py
 import streamlit as st
 import pandas as pd
 import json
@@ -15,16 +14,16 @@ st.set_page_config(page_title="Plataforma IA de Datos", layout="wide")
 
 # Menú de navegación
 def show_navigation():
-    st.sidebar.title(" Navegación")
+    st.sidebar.title("🧭 Navegación")
     option = st.sidebar.radio(
         "Selecciona una función:",
-        [" Cruce Inteligente", " Dashboard", " Editor", " Exportador", 
-         " Enriquecimiento IA", " Mapeo de Datos", " Control de Accesos"]
+        ["🔄 Cruce Inteligente", "📊 Dashboard", "✏️ Editor", "📤 Exportador", 
+         "🤖 Enriquecimiento IA", "🗺️ Mapeo de Datos", "👥 Control de Accesos"]
     )
     return option
 
 # Reinicio de sesión
-if st.sidebar.button(" Reiniciar Sesión"):
+if st.sidebar.button("🔄 Reiniciar Sesión"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.sidebar.success("Sesión reiniciada correctamente")
@@ -33,11 +32,11 @@ if st.sidebar.button(" Reiniciar Sesión"):
 # Seleccionar función a mostrar
 navegacion = show_navigation()
 
-if navegacion == " Cruce Inteligente":
-    st.title(" Cruce Inteligente de Datos")
+if navegacion == "🔄 Cruce Inteligente":
+    st.title("🔄 Cruce Inteligente de Datos")
 
-    uploaded_file_1 = st.file_uploader(" Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
-    uploaded_file_2 = st.file_uploader(" Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
+    uploaded_file_1 = st.file_uploader("📁 Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
+    uploaded_file_2 = st.file_uploader("📁 Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
     
     if uploaded_file_1 and uploaded_file_2:
         base_df = read_flexible_file(uploaded_file_1)
@@ -47,12 +46,12 @@ if navegacion == " Cruce Inteligente":
         new_df.columns = normalize_column_names(new_df.columns)
         base_df.columns = normalize_column_names(base_df.columns)
 
-        # Guardar los DataFrames en la sesión para uso del asistente de datos
+        # Guardar los DataFrames en la sesión para uso del asistente conversacional
         guardar_dataframes_en_sesion(base_df, new_df)
 
         campo_clave = st.selectbox("Seleccioná campo clave", new_df.columns)
         if campo_clave not in base_df.columns:
-            st.error(f" La columna '{campo_clave}' no existe en la base cargada.")
+            st.error(f"❌ La columna '{campo_clave}' no existe en la base cargada.")
             st.stop()
         
         # Guardar campo clave en sesión
@@ -68,12 +67,11 @@ if navegacion == " Cruce Inteligente":
 
         # Guardar coincidencias en sesión
         st.session_state["coincidencias"] = coincidencias
-        
-        st.success(f"{len(coincidencias)} coincidencias encontradas.")
+          st.success(f"{len(coincidencias)} coincidencias encontradas.")
         st.dataframe(pd.DataFrame(coincidencias, columns=["Nuevo", "Base"]))
     
     # Asistente de datos en modo agente
-    st.title(" Asistente de Datos (Modo Agente)")
+    st.title("🤖 Asistente de Datos (Modo Agente)")
     pregunta = st.text_input("Consulta o instrucción para el asistente:")
     if pregunta:
         with st.spinner("Analizando datos..."):
@@ -84,8 +82,7 @@ if navegacion == " Cruce Inteligente":
                 
                 # Aplicar formato mejorado para respuestas del agente
                 st.success("Análisis completado:")
-                
-                # Usar markdown para aprovechar el formato estructurado del agente
+                  # Usar markdown para aprovechar el formato estructurado del agente
                 st.markdown(respuesta)
                 
                 # Guardar historial
@@ -96,7 +93,7 @@ if navegacion == " Cruce Inteligente":
                 error_message = str(e)
                 if "429" in error_message:
                     st.error("""
-                     Se ha excedido el límite de uso de la API de Redpill.io. 
+                    ❌ Se ha excedido el límite de uso de la API de Redpill.io. 
                     
                     Para resolver esto:
                     1. Verifica tu saldo en el panel de control de Redpill.io
@@ -107,7 +104,7 @@ if navegacion == " Cruce Inteligente":
                     """)
                 elif "SSL" in error_message or "TLS" in error_message:
                     st.error("""
-                     Error de conexión segura (SSL/TLS) al comunicarse con la API.
+                    ❌ Error de conexión segura (SSL/TLS) al comunicarse con la API.
                     
                     Esto podría deberse a:
                     1. Problemas de red o firewall
@@ -118,7 +115,7 @@ if navegacion == " Cruce Inteligente":
                     """)
                 elif "timeout" in error_message.lower():
                     st.error("""
-                     Tiempo de espera agotado al comunicarse con la API.
+                    ❌ Tiempo de espera agotado al comunicarse con la API.
                     
                     El análisis de datos puede requerir más tiempo del permitido por la conexión.
                     Recomendaciones:
@@ -130,12 +127,11 @@ if navegacion == " Cruce Inteligente":
                     st.error(f"Error al procesar la consulta: {error_message}")
                     st.info("Puedes probar con una consulta diferente o verificar la conexión a internet.")
             except Exception as e:
-                st.error(f"Error inesperado: {str(e)}")
-                st.info("El modo agente requiere datos suficientes para realizar un análisis. Asegúrate de haber cargado correctamente los archivos.")
+                st.error(f"Error inesperado: {str(e)}")                st.info("El modo agente requiere datos suficientes para realizar un análisis. Asegúrate de haber cargado correctamente los archivos.")
 
     # Historial de interacciones
     if 'historial' in st.session_state and st.session_state.historial:
-        st.title(" Historial de Análisis")
+        st.title("🕓 Historial de Análisis")
         for i, (p, r) in enumerate(st.session_state.historial):
             st.markdown(f"**Consulta {i+1}:** {p}")
             st.markdown(f"**Análisis:**")
@@ -145,35 +141,35 @@ if navegacion == " Cruce Inteligente":
         # Añadir botón para descargar el historial
         if st.button("Descargar Historial"):
             df_historial = pd.DataFrame(st.session_state.historial, columns=["Consulta", "Análisis"])
-            st.download_button(" Descargar CSV", df_historial.to_csv(index=False), "historial_analisis.csv", "text/csv")
+            st.download_button("📥 Descargar CSV", df_historial.to_csv(index=False), "historial_analisis.csv", "text/csv")
 
 # Aquí comenzará el código para las otras páginas
-elif navegacion == " Dashboard":
+elif navegacion == "📊 Dashboard":
     # Importar y ejecutar el código del dashboard
     from dashboard import run_dashboard
     run_dashboard()
     
-elif navegacion == " Editor":
+elif navegacion == "✏️ Editor":
     # Importar y ejecutar el código del editor
     from editor import run_editor
     run_editor()
     
-elif navegacion == " Exportador":
+elif navegacion == "📤 Exportador":
     # Importar y ejecutar el código del exportador
     from exportador import run_exportador
     run_exportador()
     
-elif navegacion == " Enriquecimiento IA":
+elif navegacion == "🤖 Enriquecimiento IA":
     # Importar y ejecutar el código de enriquecimiento de IA
     from ia_enriquecimiento import run_ia_enriquecimiento
     run_ia_enriquecimiento()
     
-elif navegacion == " Mapeo de Datos":
+elif navegacion == "🗺️ Mapeo de Datos":
     # Importar y ejecutar el código de mapeo de datos
     from mapping_ai import run_mapping_ai
     run_mapping_ai()
     
-elif navegacion == " Control de Accesos":
+elif navegacion == "👥 Control de Accesos":
     # Importar y ejecutar el código de control de accesos
     from colaboracion import run_colaboracion
     run_colaboracion()

@@ -11,8 +11,8 @@ Este proyecto es una aplicación de escritorio web desarrollada en Python + Stre
 - **✏️ Editor de datos**: tabla editable directamente desde la interfaz y exportación del resultado.
 - **📤 Exportador**: exportación filtrada de la base por columna y valor en CSV, Excel o JSON.
 - **🤖 Enriquecimiento IA**: permite pegar datos no estructurados para que la IA los limpie y estructure automáticamente.
-- **💬 Asistente conversacional**: interfaz para consultar a la IA sobre la base cargada, con historial de preguntas y respuestas.
-- **🕓 Historial IA exportable**: el historial de interacciones con la IA se guarda en sesión y puede descargarse como CSV.
+- **🧠 Asistente en Modo Agente**: interfaz avanzada que proporciona análisis estructurados con hallazgos y recomendaciones sobre los datos cargados.
+- **🕓 Historial de análisis exportable**: el historial de interacciones con la IA se guarda en sesión y puede descargarse como CSV.
 - **🔄 Reinicio rápido**: botón que permite reiniciar la sesión y limpiar todos los datos cargados.
 - **🔍 Diagnóstico de API/SSL**: herramientas avanzadas para diagnosticar y resolver problemas de conexión SSL.
 - **📝 Sistema de caché**: reduce la necesidad de conectarse a la API y mejora el rendimiento.
@@ -80,6 +80,9 @@ gestion-empleados-ia-streamlit/
 - Autenticación de usuarios.
 - Dashboard personalizado por rol.
 - Entrenamiento incremental del asistente IA.
+- Expansión de las capacidades del Modo Agente con análisis estadísticos avanzados.
+- Generación automática de visualizaciones basadas en los hallazgos del Modo Agente.
+- Exportación de informes completos a partir de los análisis del agente.
 
 ---
 
