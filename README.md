@@ -51,26 +51,63 @@ urllib3
 5. Agregá la API key en `Secrets` con el siguiente formato:
 
 ```toml
-[openai]
+[redpill]
 api_key = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+api_url = "https://redpill.io/api/v1"
 ```
 
 6. ¡Listo! La app estará online.
 
 ---
 
+## 🚀 Inicio rápido
+
+Para iniciar la aplicación en tu entorno local:
+
+1. Clona este repositorio
+2. Instala las dependencias: `pip install -r requirements.txt`
+3. Ejecuta el script de inicio mejorado:
+   - En Windows: `iniciar_app_mejorada.bat`
+   - En Linux/Mac: `sh setup.sh`
+
+Si encuentras algún problema, ejecuta la herramienta de diagnóstico:
+```
+streamlit run diagnostico_sistema.py
+```
+
+---
+
 ## 📦 Estructura del proyecto
 
 ```
-gestion-empleados-ia-streamlit/
+plataforma-ia-datos/
 │
-├── main.py                 # Interfaz principal unificada
-├── requirements.txt        # Dependencias
-├── README.md               # Documentación
+├── main.py                    # Interfaz principal unificada
+├── asistente_datos.py         # Asistente de datos original
+├── asistente_datos_mejorado.py # Asistente con UX/UI mejorada
+├── api_fix.py                 # Solución para API keys en entornos de solo lectura
+├── ui_components.py           # Componentes UI reutilizables
+├── ui_styles.py               # Estilos CSS globales
+├── diagnostico_sistema.py     # Herramienta de diagnóstico unificada
+├── autotest.py                # Tests automáticos del sistema
+├── GUIA_USUARIO.md            # Guía completa para usuarios
+├── requirements.txt           # Dependencias
+├── README.md                  # Documentación
 ├── .streamlit/
-│   ├── config.toml         # Configuración visual y de servidor
-│   └── secrets.toml        # (solo local, usar Secrets en Streamlit Cloud)
+│   ├── config.toml            # Configuración visual y de servidor
+│   └── secrets.toml           # (solo local, usar Secrets en Streamlit Cloud)
 ```
+
+---
+
+## 🔧 Nuevas funcionalidades (Mayo 2025)
+
+- **🛡️ Modo de funcionamiento en solo lectura**: Ahora la aplicación puede funcionar en entornos donde el sistema de archivos es de solo lectura.
+- **🎨 Interfaz de usuario mejorada**: Rediseño completo de la UI con componentes modernos y experiencia de usuario optimizada.
+- **🧪 Sistema de diagnóstico unificado**: Nueva herramienta para detectar y solucionar problemas comunes.
+- **📋 Documentación mejorada**: Guía de usuario detallada y actualizada.
+- **🔄 Sistema de pruebas automáticas**: Herramienta para verificar la integridad del sistema.
+- **🚀 Script de inicio mejorado**: Verifica dependencias y realiza diagnóstico antes de iniciar.
 
 ---
 
