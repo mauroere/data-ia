@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Este documento técnico describe la implementación del Modo Agente en la aplicación de análisis de datos. El Modo Agente proporciona un análisis más estructurado y proactivo que el anterior modo de chat conversacional.
+Este documento técnico describe la implementación del Modo Agente en la aplicación de análisis de datos, específicamente en el módulo de Cruce Inteligente. El Modo Agente proporciona un análisis más estructurado y proactivo que el modo de chat conversacional tradicional.
 
 ## Arquitectura
 
@@ -17,18 +17,43 @@ El Modo Agente se implementa a través de la función `make_api_request_agente()
 
 | Característica       | Modo Chat | Modo Agente                   |
 | -------------------- | --------- | ----------------------------- |
-| Temperatura          | 0.7       | 0.5                           |
+| Temperatura          | 0.7       | 0.3 (más determinístico)      |
 | Tokens máximos       | 1000      | 1500                          |
 | Instrucciones        | Generales | Específicas y estructuradas   |
 | Formato de respuesta | Libre     | Estructurado en secciones     |
 | Comportamiento       | Reactivo  | Proactivo con recomendaciones |
+| Response Format      | No especificado | `{"type": "text"}`      |
 
-## Integración en main.py
+## Instrucciones Especializadas
 
-El Modo Agente se integra en la interfaz principal a través de:
+Las instrucciones enviadas al modelo son críticas para obtener respuestas estructuradas:
 
-1. La importación de `make_api_request_agente` desde `api_context`
-2. La sustitución de la anterior llamada a `make_api_request_contexto`
+```python
+instrucciones_agente = """
+Actúa como un agente de análisis de datos especializado que puede:
+1. Interpretar datos y realizar análisis básicos
+2. Buscar patrones, correlaciones y tendencias en los datos
+3. Sugerir acciones específicas basadas en el análisis
+4. Responder a consultas técnicas sobre los datos
+5. Explicar el significado de los resultados del cruce de datos
+6. Proponer nuevos análisis o cruces que podrían ser útiles
+
+IMPORTANTE: DEBES responder SIEMPRE utilizando EXACTAMENTE el siguiente formato estructurado:
+
+📊 ANÁLISIS:
+[Breve resumen de tu interpretación de los datos]
+
+🔍 HALLAZGOS:
+1. [Primer hallazgo importante]
+2. [Segundo hallazgo importante]
+3. [Más hallazgos si corresponde]
+
+📈 RECOMENDACIONES:
+- [Primera recomendación concreta]
+- [Segunda recomendación concreta]
+- [Más recomendaciones si corresponde]
+"""
+```
 3. La adaptación de la interfaz de usuario para reflejar el nuevo paradigma de agente
 4. La actualización del formato de visualización usando markdown en lugar de texto plano
 

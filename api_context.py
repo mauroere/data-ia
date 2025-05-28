@@ -232,10 +232,9 @@ def make_api_request_agente(pregunta: str) -> dict:
     
     # Generar contexto basado en los datos cargados
     contexto = generar_contexto_datos()
-    
-    # Instrucciones específicas para el modo agente
+      # Instrucciones específicas para el modo agente
     instrucciones_agente = """
-    Actúa como un agente de análisis de datos que puede:
+    Actúa como un agente de análisis de datos especializado que puede:
     1. Interpretar datos y realizar análisis básicos
     2. Buscar patrones, correlaciones y tendencias en los datos
     3. Sugerir acciones específicas basadas en el análisis
@@ -243,11 +242,22 @@ def make_api_request_agente(pregunta: str) -> dict:
     5. Explicar el significado de los resultados del cruce de datos
     6. Proponer nuevos análisis o cruces que podrían ser útiles
     
-    Cuando respondas, sigue este formato:
-    1. 📊 ANÁLISIS: Breve resumen de tu interpretación de los datos
-    2. 🔍 HALLAZGOS: Enumera los principales hallazgos o conclusiones
-    3. 📈 RECOMENDACIONES: Sugiere acciones concretas o análisis adicionales
+    IMPORTANTE: DEBES responder SIEMPRE utilizando EXACTAMENTE el siguiente formato estructurado:
+
+    📊 ANÁLISIS:
+    [Breve resumen de tu interpretación de los datos]
+
+    🔍 HALLAZGOS:
+    1. [Primer hallazgo importante]
+    2. [Segundo hallazgo importante]
+    3. [Más hallazgos si corresponde]
+
+    📈 RECOMENDACIONES:
+    - [Primera recomendación concreta]
+    - [Segunda recomendación concreta]
+    - [Más recomendaciones si corresponde]
     
+    No omitas ninguna de las tres secciones y mantén siempre este formato estructurado. No utilices formato de chat informal.
     Usa lenguaje técnico pero comprensible y responde siempre en español.
     """
     
@@ -259,15 +269,15 @@ def make_api_request_agente(pregunta: str) -> dict:
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
-        }
-        payload = {
+        }        payload = {
             "model": "mistralai/ministral-8b",
             "messages": [
-                {"role": "system", "content": "Eres un agente inteligente especializado en análisis de datos que ayuda a los usuarios a trabajar con archivos CSV y Excel. Puedes analizar, interpretar y actuar sobre los datos proporcionados. Debes responder en español siguiendo un formato estructurado."},
+                {"role": "system", "content": "Eres un agente inteligente especializado en análisis de datos que ayuda a los usuarios a trabajar con archivos CSV y Excel. Puedes analizar, interpretar y actuar sobre los datos proporcionados. DEBES responder SIEMPRE utilizando un formato ESTRUCTURADO con tres secciones: ANÁLISIS, HALLAZGOS y RECOMENDACIONES. Nunca respondas en formato de chat informal."},
                 {"role": "user", "content": pregunta_enriquecida}
             ],
-            "temperature": 0.5,  # Reducida para respuestas más precisas y estructuradas
-            "max_tokens": 1500   # Aumentado para permitir respuestas más detalladas
+            "temperature": 0.3,  # Temperatura más baja para respuestas más determinísticas y estructuradas
+            "max_tokens": 1500,  # Aumentado para permitir respuestas más detalladas
+            "response_format": {"type": "text"}  # Asegurar que la respuesta sea texto
         }
         
         response = requests.post(

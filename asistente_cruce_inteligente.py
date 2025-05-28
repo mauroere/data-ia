@@ -130,21 +130,29 @@ def mostrar_analisis_estructurado(respuesta_texto: str):
     secciones = {}
     
     try:
+        # Buscar exactamente el formato esperado del agente
         if "📊 ANÁLISIS:" in respuesta_texto:
             # Separar análisis
             partes = respuesta_texto.split("📊 ANÁLISIS:")
             if len(partes) > 1:
-                analisis_y_resto = partes[1].split("🔍 HALLAZGOS:", 1)
-                secciones["analisis"] = analisis_y_resto[0].strip()
+                # Eliminar cualquier texto previo a las secciones estructuradas
+                contenido_estructurado = partes[1]
                 
-                # Separar hallazgos y recomendaciones
-                if len(analisis_y_resto) > 1:
-                    hallazgos_y_recomendaciones = analisis_y_resto[1].split("📈 RECOMENDACIONES:", 1)
-                    secciones["hallazgos"] = hallazgos_y_recomendaciones[0].strip()
+                # Separar las tres secciones
+                if "🔍 HALLAZGOS:" in contenido_estructurado:
+                    analisis, resto = contenido_estructurado.split("🔍 HALLAZGOS:", 1)
+                    secciones["analisis"] = analisis.strip()
                     
-                    # Separar recomendaciones
-                    if len(hallazgos_y_recomendaciones) > 1:
-                        secciones["recomendaciones"] = hallazgos_y_recomendaciones[1].strip()
+                    if "📈 RECOMENDACIONES:" in resto:
+                        hallazgos, recomendaciones = resto.split("📈 RECOMENDACIONES:", 1)
+                        secciones["hallazgos"] = hallazgos.strip()
+                        secciones["recomendaciones"] = recomendaciones.strip()
+                    else:
+                        # Solo hallazgos, sin recomendaciones
+                        secciones["hallazgos"] = resto.strip()
+                else:
+                    # Solo análisis, sin hallazgos ni recomendaciones
+                    secciones["analisis"] = contenido_estructurado.strip()
         
         # Si se pudieron extraer las secciones, mostrarlas con formato mejorado
         if "analisis" in secciones:
@@ -155,21 +163,22 @@ def mostrar_analisis_estructurado(respuesta_texto: str):
                     <div>{secciones['analisis']}</div>
                 </div>
             """, unsafe_allow_html=True)
-            
-            # Mostrar hallazgos si existen
+              # Mostrar hallazgos si existen
             if "hallazgos" in secciones:
                 # Intentar separar los hallazgos individuales
                 hallazgos_texto = secciones["hallazgos"]
                 hallazgos_items = []
                 
-                # Buscar items numerados o con viñetas
+                # Buscar items numerados o con viñetas usando una expresión regular más robusta
                 import re
-                hallazgos_items = re.split(r'\n\s*\d+[\.\)-]\s*|\n\s*[-•*]\s*', hallazgos_texto)
-                hallazgos_items = [h for h in hallazgos_items if h.strip()]
+                # Buscar patrones como "1. ", "1) ", "- ", "• "
+                matches = re.findall(r'(?:\d+[\.\)]\s*|\-\s*|\•\s*)(.+?)(?=\n\s*\d+[\.\)]\s*|\n\s*[\-\•]\s*|$)', hallazgos_texto, re.DOTALL)
                 
-                if not hallazgos_items and hallazgos_texto:
-                    # Si no se pudieron separar, usar el texto completo
-                    hallazgos_items = [hallazgos_texto]
+                if matches:
+                    hallazgos_items = [m.strip() for m in matches if m.strip()]
+                else:
+                    # Si no se pudieron separar, dividir por líneas
+                    hallazgos_items = [h.strip() for h in hallazgos_texto.split('\n') if h.strip()]
                 
                 st.markdown("""
                 <div class="analysis-section">
@@ -177,29 +186,33 @@ def mostrar_analisis_estructurado(respuesta_texto: str):
                 """, unsafe_allow_html=True)
                 
                 for i, hallazgo in enumerate(hallazgos_items, 1):
+                    # Eliminar numeración o viñetas existentes al principio
+                    hallazgo_limpio = re.sub(r'^\s*\d+[\.\)]\s*|\s*[\-\•]\s*', '', hallazgo)
+                    
                     st.markdown(f"""
                     <div class="finding-item">
                         <div class="finding-number">{i}</div>
-                        <div>{hallazgo.strip()}</div>
+                        <div>{hallazgo_limpio}</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Mostrar recomendaciones si existen
+              # Mostrar recomendaciones si existen
             if "recomendaciones" in secciones:
                 # Intentar separar las recomendaciones individuales
                 recomendaciones_texto = secciones["recomendaciones"]
                 recomendaciones_items = []
                 
-                # Buscar items numerados o con viñetas
+                # Buscar items numerados o con viñetas usando una expresión regular más robusta
                 import re
-                recomendaciones_items = re.split(r'\n\s*\d+[\.\)-]\s*|\n\s*[-•*]\s*', recomendaciones_texto)
-                recomendaciones_items = [r for r in recomendaciones_items if r.strip()]
+                # Buscar patrones como "1. ", "1) ", "- ", "• "
+                matches = re.findall(r'(?:\d+[\.\)]\s*|\-\s*|\•\s*)(.+?)(?=\n\s*\d+[\.\)]\s*|\n\s*[\-\•]\s*|$)', recomendaciones_texto, re.DOTALL)
                 
-                if not recomendaciones_items and recomendaciones_texto:
-                    # Si no se pudieron separar, usar el texto completo
-                    recomendaciones_items = [recomendaciones_texto]
+                if matches:
+                    recomendaciones_items = [m.strip() for m in matches if m.strip()]
+                else:
+                    # Si no se pudieron separar, dividir por líneas
+                    recomendaciones_items = [r.strip() for r in recomendaciones_texto.split('\n') if r.strip()]
                 
                 st.markdown("""
                 <div class="analysis-section">
@@ -207,10 +220,13 @@ def mostrar_analisis_estructurado(respuesta_texto: str):
                 """, unsafe_allow_html=True)
                 
                 for recomendacion in recomendaciones_items:
-                    if recomendacion.strip():
+                    # Eliminar numeración o viñetas existentes al principio
+                    recomendacion_limpia = re.sub(r'^\s*\d+[\.\)]\s*|\s*[\-\•]\s*', '', recomendacion)
+                    
+                    if recomendacion_limpia.strip():
                         st.markdown(f"""
                         <div class="recommendation-item">
-                            {recomendacion.strip()}
+                            {recomendacion_limpia}
                         </div>
                         """, unsafe_allow_html=True)
                 
@@ -291,13 +307,19 @@ def run_asistente_cruce_inteligente():
     if 'base_df' not in st.session_state or 'new_df' not in st.session_state:
         st.warning("⚠️ Carga primero los archivos BASE y NUEVO para utilizar el asistente de cruce inteligente.")
         return
-    
-    # Encabezado del asistente
+      # Encabezado del asistente
     st.markdown("<div class='cruce-header'>🧠 Asistente de Cruce Inteligente</div>", unsafe_allow_html=True)
     st.markdown("""
     Este asistente te ayudará a analizar los datos cargados y obtener recomendaciones 
-    para optimizar el cruce de información. Funciona en modo agente para proporcionar 
-    análisis estructurados y detallados.
+    para optimizar el cruce de información. 
+    
+    **Funciona en modo agente estructurado**, proporcionando:
+    1. 📊 **Análisis detallado** de los datos
+    2. 🔍 **Hallazgos específicos** basados en patrones y relaciones
+    3. 📈 **Recomendaciones accionables** para mejorar el cruce de datos
+    
+    A diferencia de un chat normal, este asistente especializado organiza la información 
+    en secciones estructuradas para facilitar la comprensión y aplicación.
     """)
     
     # Sección de estadísticas
@@ -371,14 +393,14 @@ def run_asistente_cruce_inteligente():
         height=100,
         placeholder="Ejemplo: Analiza los datos y sugiere la mejor estrategia para el cruce"
     )
-    
-    # Botón para enviar consulta
+      # Botón para enviar consulta
     if st.button("🧠 Analizar con IA", use_container_width=True, type="primary"):
         if not consulta.strip():
             st.warning("Por favor, escribe una consulta o selecciona una de las sugerencias.")
         else:
-            # Mostrar indicador de carga
+            # Mostrar indicador de carga y mensaje explicativo
             with st.spinner("El agente está analizando tus datos..."):
+                st.info("El agente proporcionará una respuesta estructurada con análisis, hallazgos y recomendaciones, no un chat normal.")
                 try:
                     # Realizar la consulta a la API en modo agente
                     respuesta = make_api_request_agente(consulta.strip())

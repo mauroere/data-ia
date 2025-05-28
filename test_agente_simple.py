@@ -1,11 +1,13 @@
 """
 Script simple para probar la funcionalidad de modo agente sin dependencias externas.
+Esta versión actualizada verifica el formato estructurado de la respuesta.
 """
 
 import requests
 import warnings
 import json
 import os
+import re
 from typing import Dict, Any
 
 # Desactivar advertencias SSL para pruebas
@@ -27,6 +29,47 @@ def get_api_key():
     except Exception as e:
         print(f"Error al obtener la clave API: {str(e)}")
         return "sk-xYBWXr1epqP3Uq1A05qUql9tAyBsJE5F8PL5L66gBaE328VG"  # API key de prueba
+
+def verificar_formato_agente(respuesta: Dict[str, Any]) -> bool:
+    """
+    Verifica que la respuesta tenga el formato estructurado del modo agente.
+    
+    Args:
+        respuesta: Respuesta de la API
+        
+    Returns:
+        bool: True si la respuesta tiene el formato esperado, False en caso contrario
+    """
+    if "choices" not in respuesta or len(respuesta["choices"]) == 0:
+        print("Error: La respuesta no contiene choices")
+        return False
+    
+    # Obtener el texto de la respuesta
+    texto_respuesta = respuesta["choices"][0]["message"]["content"]
+    
+    # Verificar que contenga las tres secciones esperadas
+    tiene_analisis = "📊 ANÁLISIS:" in texto_respuesta
+    tiene_hallazgos = "🔍 HALLAZGOS:" in texto_respuesta
+    tiene_recomendaciones = "📈 RECOMENDACIONES:" in texto_respuesta
+    
+    # Contar el número de secciones encontradas
+    secciones_encontradas = sum([tiene_analisis, tiene_hallazgos, tiene_recomendaciones])
+    
+    if secciones_encontradas == 3:
+        print("✅ La respuesta contiene las tres secciones esperadas")
+        return True
+    else:
+        print(f"⚠️ La respuesta solo contiene {secciones_encontradas} de 3 secciones esperadas")
+        
+        # Mostrar qué secciones faltan
+        if not tiene_analisis:
+            print("  - Falta la sección 📊 ANÁLISIS")
+        if not tiene_hallazgos:
+            print("  - Falta la sección 🔍 HALLAZGOS")
+        if not tiene_recomendaciones:
+            print("  - Falta la sección 📈 RECOMENDACIONES")
+            
+        return False
 
 def make_api_request_agente(pregunta: str):
     """
@@ -64,10 +107,9 @@ def make_api_request_agente(pregunta: str):
     El usuario ha seleccionado 'nombre' como campo clave para el cruce.
     Se han encontrado 5 coincidencias entre los archivos.
     """
-    
-    # Instrucciones específicas para el modo agente
+      # Instrucciones específicas para el modo agente - versión actualizada más explícita
     instrucciones_agente = """
-    Actúa como un agente de análisis de datos que puede:
+    Actúa como un agente de análisis de datos especializado que puede:
     1. Interpretar datos y realizar análisis básicos
     2. Buscar patrones, correlaciones y tendencias en los datos
     3. Sugerir acciones específicas basadas en el análisis
@@ -75,11 +117,22 @@ def make_api_request_agente(pregunta: str):
     5. Explicar el significado de los resultados del cruce de datos
     6. Proponer nuevos análisis o cruces que podrían ser útiles
     
-    Cuando respondas, sigue este formato:
-    1. 📊 ANÁLISIS: Breve resumen de tu interpretación de los datos
-    2. 🔍 HALLAZGOS: Enumera los principales hallazgos o conclusiones
-    3. 📈 RECOMENDACIONES: Sugiere acciones concretas o análisis adicionales
+    IMPORTANTE: DEBES responder SIEMPRE utilizando EXACTAMENTE el siguiente formato estructurado:
+
+    📊 ANÁLISIS:
+    [Breve resumen de tu interpretación de los datos]
+
+    🔍 HALLAZGOS:
+    1. [Primer hallazgo importante]
+    2. [Segundo hallazgo importante]
+    3. [Más hallazgos si corresponde]
+
+    📈 RECOMENDACIONES:
+    - [Primera recomendación concreta]
+    - [Segunda recomendación concreta]
+    - [Más recomendaciones si corresponde]
     
+    No omitas ninguna de las tres secciones y mantén siempre este formato estructurado. No utilices formato de chat informal.
     Usa lenguaje técnico pero comprensible y responde siempre en español.
     """
     
@@ -92,15 +145,14 @@ def make_api_request_agente(pregunta: str):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
-        }
-        payload = {
-            "model": "mistralai/ministral-8b",
+        }        payload = {            "model": "mistralai/ministral-8b",
             "messages": [
-                {"role": "system", "content": "Eres un agente inteligente especializado en análisis de datos que ayuda a los usuarios a trabajar con archivos CSV y Excel. Puedes analizar, interpretar y actuar sobre los datos proporcionados. Debes responder en español siguiendo un formato estructurado."},
+                {"role": "system", "content": "Eres un agente inteligente especializado en análisis de datos que ayuda a los usuarios a trabajar con archivos CSV y Excel. Puedes analizar, interpretar y actuar sobre los datos proporcionados. DEBES responder SIEMPRE utilizando un formato ESTRUCTURADO con tres secciones: ANÁLISIS, HALLAZGOS y RECOMENDACIONES. Nunca respondas en formato de chat informal."},
                 {"role": "user", "content": pregunta_enriquecida}
             ],
-            "temperature": 0.5,
-            "max_tokens": 1500
+            "temperature": 0.3,  # Temperatura más baja para respuestas más determinísticas
+            "max_tokens": 1500,   # Aumentado para permitir respuestas más detalladas
+            "response_format": {"type": "text"}  # Asegurar que la respuesta sea texto
         }
         
         print(f"URL de la API: {api_url}")
@@ -126,7 +178,7 @@ def make_api_request_agente(pregunta: str):
         return None
 
 def main():
-    print("=== Test de API en modo agente (versión simple) ===")
+    print("=== Test de API en modo agente (versión mejorada) ===")
     
     # Probar la función de agente
     pregunta = "Analiza las coincidencias entre los dos conjuntos de datos y recomienda acciones"
@@ -135,12 +187,19 @@ def main():
     respuesta = make_api_request_agente(pregunta)
     
     if respuesta:
+        # Verificar el formato de la respuesta
+        formato_correcto = verificar_formato_agente(respuesta)
+        
         contenido = respuesta["choices"][0]["message"]["content"]
         
         print("\n=== RESPUESTA DEL AGENTE ===")
         print(contenido)
         print("===========================")
-        print("\nTest completado con éxito.")
+        
+        if formato_correcto:
+            print("\n✅ PRUEBA EXITOSA: El modo agente está funcionando correctamente con formato estructurado")
+        else:
+            print("\n⚠️ ADVERTENCIA: La respuesta no sigue completamente el formato estructurado esperado")
     else:
         print("\n❌ No se pudo obtener una respuesta del agente.")
 

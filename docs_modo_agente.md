@@ -2,16 +2,25 @@
 
 ## Introducción
 
-El Asistente de Datos ha sido actualizado a un **Modo Agente** más potente y estructurado. Este nuevo modo ofrece análisis más profundos y recomendaciones accionables basadas en tus datos.
+El Asistente de Cruce Inteligente ha sido implementado con un **Modo Agente** potente y estructurado. Este modo ofrece análisis más profundos y recomendaciones accionables basadas en tus datos, presentados en un formato estructurado para facilitar la toma de decisiones.
 
 ## ¿Qué es el Modo Agente?
 
-A diferencia del asistente conversacional anterior, el Modo Agente:
+A diferencia del asistente conversacional estándar, el Modo Agente:
 
-1. **Proporciona análisis estructurados** - Cada respuesta incluye análisis, hallazgos y recomendaciones claramente definidos
+1. **Proporciona análisis estructurados** - Cada respuesta incluye análisis, hallazgos y recomendaciones claramente definidos en secciones separadas
 2. **Es más proactivo** - No solo responde preguntas, sino que sugiere acciones y análisis adicionales
 3. **Utiliza lenguaje técnico pero comprensible** - Explica conceptos técnicos de manera accesible
 4. **Aprovecha mejor el contexto** - Usa toda la información de tus datos para proporcionar respuestas más completas
+5. **Mantiene un formato consistente** - Todas las respuestas siguen exactamente el mismo formato estructurado
+
+## Formato de las Respuestas
+
+Todas las respuestas del agente siguen una estructura consistente con tres secciones principales:
+
+- **📊 ANÁLISIS**: Visión general e interpretación de los datos analizados
+- **🔍 HALLAZGOS**: Lista numerada de descubrimientos específicos y patrones importantes
+- **📈 RECOMENDACIONES**: Sugerencias concretas y accionables para mejorar el cruce de datos
 
 ## Cómo usar el Asistente de Datos en Modo Agente
 
