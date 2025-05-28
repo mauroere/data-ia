@@ -15,20 +15,20 @@ El Modo Agente se implementa a través de la función `make_api_request_agente()
 
 ## Diferencias clave con el modo chat
 
-| Característica | Modo Chat | Modo Agente |
-|----------------|-----------|-------------|
-| Temperatura | 0.7 | 0.5 |
-| Tokens máximos | 1000 | 1500 |
-| Instrucciones | Generales | Específicas y estructuradas |
-| Formato de respuesta | Libre | Estructurado en secciones |
-| Comportamiento | Reactivo | Proactivo con recomendaciones |
+| Característica       | Modo Chat | Modo Agente                   |
+| -------------------- | --------- | ----------------------------- |
+| Temperatura          | 0.7       | 0.5                           |
+| Tokens máximos       | 1000      | 1500                          |
+| Instrucciones        | Generales | Específicas y estructuradas   |
+| Formato de respuesta | Libre     | Estructurado en secciones     |
+| Comportamiento       | Reactivo  | Proactivo con recomendaciones |
 
 ## Integración en main.py
 
 El Modo Agente se integra en la interfaz principal a través de:
 
 1. La importación de `make_api_request_agente` desde `api_context`
-2. La sustitución de la anterior llamada a `make_api_request_contexto` 
+2. La sustitución de la anterior llamada a `make_api_request_contexto`
 3. La adaptación de la interfaz de usuario para reflejar el nuevo paradigma de agente
 4. La actualización del formato de visualización usando markdown en lugar de texto plano
 
