@@ -112,11 +112,15 @@ def make_api_request_contexto(pregunta: str) -> dict:
             # Guardar de forma persistente para futuros usos
             try:
                 from config_manager import save_api_key
-                if save_api_key(api_key, "redpill"):
-                    st.success("✅ La clave API se ha guardado correctamente y se usará automáticamente en próximas sesiones.")
+                # La función save_api_key ya incluye mensajes informativos adecuados
+                save_api_key(api_key, "redpill")
+                # No mostramos aquí el mensaje de éxito porque la función ya lo hace si es necesario
             except ImportError as e:
                 st.warning(f"No se pudo guardar la clave API de forma persistente: {e}")
                 st.info("La clave se guardará solo para esta sesión.")
+            except Exception as e:
+                st.warning(f"Error al guardar la clave API: {e}")
+                st.info("La clave se guardará solo para esta sesión, pero funcionará correctamente.")
     
     # Generar contexto basado en los datos cargados
     contexto = generar_contexto_datos()
@@ -201,18 +205,21 @@ def make_api_request_agente(pregunta: str) -> dict:
             st.info("Puedes seguir usando otras funcionalidades de la aplicación que no requieren API.")
             st.info("También puedes configurar la API key en la sección de Administración.")
             st.stop()
-        else:
-            # Guardar en session_state para esta sesión
+        else:            # Guardar en session_state para esta sesión
             st.session_state["redpill_api_key"] = api_key
             
             # Guardar de forma persistente para futuros usos
             try:
                 from config_manager import save_api_key
-                if save_api_key(api_key, "redpill"):
-                    st.success("✅ La clave API se ha guardado correctamente y se usará automáticamente en próximas sesiones.")
+                # La función save_api_key ya incluye mensajes informativos adecuados
+                save_api_key(api_key, "redpill")
+                # No mostramos aquí el mensaje de éxito porque la función ya lo hace si es necesario
             except ImportError as e:
                 st.warning(f"No se pudo guardar la clave API de forma persistente: {e}")
                 st.info("La clave se guardará solo para esta sesión.")
+            except Exception as e:
+                st.warning(f"Error al guardar la clave API: {e}")
+                st.info("La clave se guardará solo para esta sesión, pero funcionará correctamente.")
     
     # Generar contexto basado en los datos cargados
     contexto = generar_contexto_datos()

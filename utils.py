@@ -137,3 +137,36 @@ def get_api_url(service="redpill"):
         elif service == "openai":
             return "https://api.openai.com/v1/chat/completions"
         return ""
+
+def confirmar_continuar(mensaje="¿Desea continuar con la iteración?", key=None):
+    """
+    Muestra un mensaje de confirmación al usuario y retorna su respuesta.
+    
+    Args:
+        mensaje (str): El mensaje a mostrar al usuario
+        key (str): Clave única para el componente de Streamlit (opcional)
+    
+    Returns:
+        bool: True si el usuario confirma, False en caso contrario
+    """
+    col1, col2, col3 = st.columns([2,1,1])
+    
+    with col1:
+        st.write(mensaje)
+    
+    with col2:
+        if key:
+            continuar = st.button("✅ Continuar", key=f"continuar_{key}")
+        else:
+            continuar = st.button("✅ Continuar")
+    
+    with col3:
+        if key:
+            cancelar = st.button("❌ Cancelar", key=f"cancelar_{key}")
+        else:
+            cancelar = st.button("❌ Cancelar")
+    
+    if cancelar:
+        return False
+    
+    return continuar

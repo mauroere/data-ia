@@ -44,8 +44,7 @@ def manage_api_keys():
     
     # Opción para cambiar la clave
     change_key = st.checkbox("Cambiar clave API de Redpill", key="change_redpill_key")
-    
-    if change_key:
+      if change_key:
         new_key = st.text_input(
             "Nueva clave API de Redpill:", 
             type="password",
@@ -54,12 +53,18 @@ def manage_api_keys():
         
         if st.button("Guardar clave API", key="save_redpill_key"):
             if new_key:
-                if save_api_key(new_key, "redpill"):
+                # Intentar guardar la clave API
+                result = save_api_key(new_key, "redpill")
+                
+                # Si la función devuelve True, la clave se guardó con éxito (parcial o total)
+                if result:
                     st.session_state["redpill_api_key"] = new_key
+                    # El mensaje de éxito parcial se mostrará desde la función save_api_key si es necesario
                     st.success("✅ Clave API guardada correctamente.")
                     st.rerun()  # Recargar la página para mostrar la nueva clave
                 else:
                     st.error("❌ Error al guardar la clave API.")
+                    st.info("Verifica los permisos de escritura o contacta al administrador del sistema.")
             else:
                 st.error("❌ La clave API no puede estar vacía.")
     
@@ -85,16 +90,20 @@ def manage_api_keys():
             "Nueva clave API de OpenAI:", 
             type="password",
             help="La clave API se guardará de forma permanente."
-        )
-        
-        if st.button("Guardar clave API", key="save_openai_key"):
+        )        if st.button("Guardar clave API", key="save_openai_key"):
             if new_openai_key:
-                if save_api_key(new_openai_key, "openai"):
+                # Intentar guardar la clave API
+                result = save_api_key(new_openai_key, "openai")
+                
+                # Si la función devuelve True, la clave se guardó con éxito (parcial o total)
+                if result:
                     st.session_state["openai_api_key"] = new_openai_key
+                    # El mensaje de éxito parcial se mostrará desde la función save_api_key si es necesario
                     st.success("✅ Clave API guardada correctamente.")
                     st.rerun()  # Recargar la página para mostrar la nueva clave
                 else:
                     st.error("❌ Error al guardar la clave API.")
+                    st.info("Verifica los permisos de escritura o contacta al administrador del sistema.")
             else:
                 st.error("❌ La clave API no puede estar vacía.")
 
