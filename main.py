@@ -19,7 +19,7 @@ def show_navigation():
     option = st.sidebar.radio(
         "Selecciona una función:",
         [" Cruce Inteligente", " Dashboard", " Editor", " Exportador", 
-         " Enriquecimiento IA", " Mapeo de Datos", " Control de Accesos"]
+         " Enriquecimiento IA", " Mapeo de Datos", " Control de Accesos", " Administración"]
     )
     return option
 
@@ -177,3 +177,8 @@ elif navegacion == " Control de Accesos":
     # Importar y ejecutar el código de control de accesos
     from colaboracion import run_colaboracion
     run_colaboracion()
+    
+elif navegacion == " Administración":
+    # Importar y ejecutar el código del panel de administración
+    from admin_panel import run_admin_panel
+    run_admin_panel()

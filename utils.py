@@ -65,7 +65,7 @@ def read_flexible_file(uploaded_file):
 def get_api_key(service="openai"):
     """
     Obtiene la clave API desde los secretos de Streamlit.
-    Si no está disponible, solicita al usuario que la ingrese.
+    Si no está disponible, verifica la configuración persistente o solicita al usuario que la ingrese.
     
     Args:
         service (str): Nombre del servicio ('openai' o 'redpill')
@@ -77,7 +77,18 @@ def get_api_key(service="openai"):
     if f"{service}_api_key" in st.session_state:
         return st.session_state[f"{service}_api_key"]
     
-    # Intentar obtener del archivo secrets.toml
+    # Segundo, intentar obtener de la configuración persistente
+    try:
+        from config_manager import get_api_key_from_config
+        api_key = get_api_key_from_config(service)
+        if api_key:
+            # Guardar en session_state para futuras llamadas
+            st.session_state[f"{service}_api_key"] = api_key
+            return api_key
+    except ImportError:
+        pass  # Si no se puede importar, continuar con el flujo normal
+    
+    # Tercero, intentar obtener del archivo secrets.toml
     try:
         return st.secrets[service]["api_key"]
     except (KeyError, FileNotFoundError) as e:
