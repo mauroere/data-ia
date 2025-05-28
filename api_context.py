@@ -263,13 +263,14 @@ def make_api_request_agente(pregunta: str) -> dict:
     
     # Enriquecer la pregunta con el contexto de la aplicación y las instrucciones del agente
     pregunta_enriquecida = f"{contexto}\n\n{instrucciones_agente}\n\nConsulta/Instrucción del usuario: {pregunta}\n\n"
-    
-    try:
+      try:
         # Uso de la biblioteca requests con verificación SSL desactivada
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
-        }        payload = {
+        }
+        
+        payload = {
             "model": "mistralai/ministral-8b",
             "messages": [
                 {"role": "system", "content": "Eres un agente inteligente especializado en análisis de datos que ayuda a los usuarios a trabajar con archivos CSV y Excel. Puedes analizar, interpretar y actuar sobre los datos proporcionados. DEBES responder SIEMPRE utilizando un formato ESTRUCTURADO con tres secciones: ANÁLISIS, HALLAZGOS y RECOMENDACIONES. Nunca respondas en formato de chat informal."},
