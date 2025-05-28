@@ -22,11 +22,7 @@ st.set_page_config(
 # Asegurar que la API key esté disponible (solución temporal)
 ensure_api_key_exists()
 
-# Aplicar estilos globales mejorados
-from ui_styles import apply_styles
-apply_styles()
-
-# Estilos adicionales específicos para el main
+# Estilos CSS personalizados
 st.markdown("""
 <style>
     .main-header {
@@ -47,6 +43,15 @@ st.markdown("""
         padding: 1rem;
         border-radius: 0.5rem;
         border-left: 5px solid #09AB3B;
+    }
+    .stButton>button {
+        background-color: #FF4B4B;
+        color: white;
+        font-weight: 600;
+    }
+    .stButton>button:hover {
+        background-color: #FF7373;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -178,14 +183,10 @@ if navegacion == "🔄 Cruce Inteligente":
     
     # Separador antes del asistente de datos
     st.divider()
-      # Asistente de datos con UI/UX mejorada
-    try:
-        from asistente_datos_mejorado import run_data_assistant
-        run_data_assistant()
-    except ImportError:
-        # Si el módulo mejorado no está disponible, usar el asistente estándar
-        from asistente_datos import run_asistente_datos
-        run_asistente_datos()
+    
+    # Asistente de datos mejorado
+    from asistente_datos import run_asistente_datos
+    run_asistente_datos()
 
 # Aquí comenzará el código para las otras páginas
 elif navegacion == "📊 Dashboard":

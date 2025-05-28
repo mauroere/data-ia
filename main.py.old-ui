@@ -1,0 +1,178 @@
+﻿# filepath: c:\Users\rementeriama\Downloads\Code\data-ia\main.py
+import streamlit as st
+import pandas as pd
+import json
+import os
+import warnings
+import requests
+from typing import Optional
+from utils import read_flexible_file, are_similar, normalize_column_names, get_api_key, get_api_url
+from api_proxy import make_api_request_proxy
+from api_context import make_api_request_contexto, make_api_request_agente, guardar_dataframes_en_sesion
+# Importar el arreglo para la API key
+from api_fix import ensure_api_key_exists
+
+# Configuración de la página
+st.set_page_config(page_title="Plataforma IA de Datos", layout="wide")
+
+# Asegurar que la API key esté disponible (solución temporal)
+ensure_api_key_exists()
+
+# Menú de navegación
+def show_navigation():
+    st.sidebar.title(" Navegación")
+    option = st.sidebar.radio(
+        "Selecciona una función:",
+        [" Cruce Inteligente", " Dashboard", " Editor", " Exportador", 
+         " Enriquecimiento IA", " Mapeo de Datos", " Control de Accesos", " Administración"]
+    )
+    return option
+
+# Reinicio de sesión
+if st.sidebar.button(" Reiniciar Sesión"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.sidebar.success("Sesión reiniciada correctamente")
+    st.rerun()
+
+# Seleccionar función a mostrar
+navegacion = show_navigation()
+
+if navegacion == " Cruce Inteligente":
+    st.title(" Cruce Inteligente de Datos")
+
+    uploaded_file_1 = st.file_uploader(" Subí archivo BASE (existente)", type=["csv", "xls", "xlsx"])
+    uploaded_file_2 = st.file_uploader(" Subí archivo NUEVO (a cruzar)", type=["csv", "xls", "xlsx"])
+    
+    if uploaded_file_1 and uploaded_file_2:
+        base_df = read_flexible_file(uploaded_file_1)
+        new_df = read_flexible_file(uploaded_file_2)
+
+        # Normalizar columnas
+        new_df.columns = normalize_column_names(new_df.columns)
+        base_df.columns = normalize_column_names(base_df.columns)
+
+        # Guardar los DataFrames en la sesión para uso del asistente de datos
+        guardar_dataframes_en_sesion(base_df, new_df)
+
+        campo_clave = st.selectbox("Seleccioná campo clave", new_df.columns)
+        if campo_clave not in base_df.columns:
+            st.error(f" La columna '{campo_clave}' no existe en la base cargada.")
+            st.stop()
+        
+        # Guardar campo clave en sesión
+        st.session_state["campo_clave"] = campo_clave
+
+        coincidencias = []
+        for _, fila in new_df.iterrows():
+            val = fila[campo_clave]
+            for _, bfila in base_df.iterrows():
+                if are_similar(val, bfila[campo_clave]):
+                    coincidencias.append((val, bfila[campo_clave]))
+                    break
+
+        # Guardar coincidencias en sesión
+        st.session_state["coincidencias"] = coincidencias
+        
+        st.success(f"{len(coincidencias)} coincidencias encontradas.")
+        st.dataframe(pd.DataFrame(coincidencias, columns=["Nuevo", "Base"]))
+    
+    # Asistente de datos mejorado
+    from asistente_datos import run_asistente_datos
+    run_asistente_datos()
+    
+    # Gestión de errores en segundo plano (para el asistente)
+    if hasattr(st.session_state, "api_error"):
+        error_message = st.session_state.api_error
+        try:
+            del st.session_state.api_error
+            if "429" in error_message:
+                error_message = str(e)
+                if "429" in error_message:
+                    st.error("""
+                     Se ha excedido el límite de uso de la API de Redpill.io. 
+                    
+                    Para resolver esto:
+                    1. Verifica tu saldo en el panel de control de Redpill.io
+                    2. Actualiza tu plan o agrega fondos a tu cuenta
+                    3. Si estás usando una API key de prueba, considera obtener una nueva
+                    
+                    Mientras tanto, puedes seguir usando las otras funcionalidades de la aplicación.
+                    """)
+                elif "SSL" in error_message or "TLS" in error_message:
+                    st.error("""
+                     Error de conexión segura (SSL/TLS) al comunicarse con la API.
+                    
+                    Esto podría deberse a:
+                    1. Problemas de red o firewall
+                    2. Certificados SSL obsoletos o inválidos
+                    
+                    Hemos configurado la aplicación para usar conexiones no verificadas, por favor intenta nuevamente.
+                    Si el problema persiste, contacta al soporte técnico.
+                    """)
+                elif "timeout" in error_message.lower():
+                    st.error("""
+                     Tiempo de espera agotado al comunicarse con la API.
+                    
+                    El análisis de datos puede requerir más tiempo del permitido por la conexión.
+                    Recomendaciones:
+                    1. Intenta con una consulta más simple
+                    2. Verifica tu conexión a internet
+                    3. Prueba en un momento con menos congestión de red
+                    """)
+                else:
+                    st.error(f"Error al procesar la consulta: {error_message}")
+                    st.info("Puedes probar con una consulta diferente o verificar la conexión a internet.")
+            except Exception as e:
+                st.error(f"Error inesperado: {str(e)}")
+                st.info("El modo agente requiere datos suficientes para realizar un análisis. Asegúrate de haber cargado correctamente los archivos.")
+
+    # Historial de interacciones
+    if 'historial' in st.session_state and st.session_state.historial:
+        st.title(" Historial de Análisis")
+        for i, (p, r) in enumerate(st.session_state.historial):
+            st.markdown(f"**Consulta {i+1}:** {p}")
+            st.markdown(f"**Análisis:**")
+            st.markdown(r)
+            st.markdown("---")
+        
+        # Añadir botón para descargar el historial
+        if st.button("Descargar Historial"):
+            df_historial = pd.DataFrame(st.session_state.historial, columns=["Consulta", "Análisis"])
+            st.download_button(" Descargar CSV", df_historial.to_csv(index=False), "historial_analisis.csv", "text/csv")
+
+# Aquí comenzará el código para las otras páginas
+elif navegacion == " Dashboard":
+    # Importar y ejecutar el código del dashboard
+    from dashboard import run_dashboard
+    run_dashboard()
+    
+elif navegacion == " Editor":
+    # Importar y ejecutar el código del editor
+    from editor import run_editor
+    run_editor()
+    
+elif navegacion == " Exportador":
+    # Importar y ejecutar el código del exportador
+    from exportador import run_exportador
+    run_exportador()
+    
+elif navegacion == " Enriquecimiento IA":
+    # Importar y ejecutar el código de enriquecimiento de IA
+    from ia_enriquecimiento import run_ia_enriquecimiento
+    run_ia_enriquecimiento()
+    
+elif navegacion == " Mapeo de Datos":
+    # Importar y ejecutar el código de mapeo de datos
+    from mapping_ai import run_mapping_ai
+    run_mapping_ai()
+    
+elif navegacion == " Control de Accesos":
+    # Importar y ejecutar el código de control de accesos
+    from colaboracion import run_colaboracion
+    run_colaboracion()
+    
+elif navegacion == " Administración":
+    # Importar y ejecutar el código del panel de administración
+    from admin_panel import run_admin_panel
+    run_admin_panel()
