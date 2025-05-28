@@ -73,10 +73,16 @@ def get_api_key(service="openai"):
     Returns:
         str: Clave API
     """
+    # Valores por defecto para la clave API (uso en desarrollo/pruebas)
+    default_keys = {
+        "redpill": "sk-xYBWXr1epqP3Uq1A05qUql9tAyBsJE5F8PL5L66gBaE328VG",
+        "openai": ""  # No establecemos una clave por defecto para OpenAI
+    }
+    
     # Primero, verificar si está en la sesión (prioridad más alta)
     if f"{service}_api_key" in st.session_state:
         key = st.session_state[f"{service}_api_key"]
-        if key:  # Asegurarse de que no sea una cadena vacía
+        if key and len(key.strip()) > 0:  # Asegurarse de que no sea una cadena vacía
             return key
     
     # Segundo, intentar obtener de la configuración persistente
@@ -87,40 +93,57 @@ def get_api_key(service="openai"):
             # Guardar en session_state para futuras llamadas
             st.session_state[f"{service}_api_key"] = api_key
             return api_key
-    except ImportError as e:
-        st.error(f"Error al importar config_manager: {e}")
-    except Exception as e:
-        st.error(f"Error al obtener la API key: {e}")
+    except Exception:
+        # No mostrar errores aquí, intentar otras fuentes
+        pass
     
     # Tercero, intentar obtener del archivo secrets.toml
     try:
-        return st.secrets[service]["api_key"]
-    except (KeyError, FileNotFoundError) as e:
-        st.warning(f"No se pudo cargar la clave API de {service} desde los secretos: {str(e)}")
-        # Si no está en los secretos, intentar leer directamente del archivo
-        try:
-            import toml
-            import os
-            
-            # Ruta al archivo de secretos (probar múltiples ubicaciones)
-            possible_paths = [
-                os.path.join(os.path.dirname(os.path.dirname(__file__)), '.streamlit', 'secrets.toml'),
-                os.path.join(os.path.dirname(__file__), '.streamlit', 'secrets.toml')
-            ]
-            
-            for secrets_path in possible_paths:
-                if os.path.exists(secrets_path):
+        api_key = st.secrets[service]["api_key"]
+        if api_key and len(api_key.strip()) > 0:
+            # Guardar en session_state para futuras llamadas
+            st.session_state[f"{service}_api_key"] = api_key
+            return api_key
+    except Exception:
+        # No mostrar errores aquí, intentar otras fuentes
+        pass
+    
+    # Cuarto, intentar leer directamente del archivo secrets.toml
+    try:
+        import toml
+        import os
+        
+        # Ruta al archivo de secretos (probar múltiples ubicaciones)
+        possible_paths = [
+            os.path.join(os.path.dirname(__file__), '.streamlit', 'secrets.toml'),
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), '.streamlit', 'secrets.toml')
+        ]
+        
+        for secrets_path in possible_paths:
+            if os.path.exists(secrets_path):
+                try:
                     secrets = toml.load(secrets_path)
                     if service in secrets and "api_key" in secrets[service]:
                         # Guardar en session_state para futuras llamadas
                         api_key = secrets[service]["api_key"]
-                        st.session_state[f"{service}_api_key"] = api_key
-                        return api_key
-        except Exception as e:
-            st.warning(f"Error al leer archivo de secretos: {e}")
-        
-        # Si todo falla, devolver vacío (se manejará en la UI)
-        return ""
+                        if api_key and len(api_key.strip()) > 0:
+                            st.session_state[f"{service}_api_key"] = api_key
+                            return api_key
+                except Exception:
+                    # Si hay error al leer el archivo, continuar con la siguiente fuente
+                    continue
+    except Exception:
+        # No mostrar errores aquí, intentar otras fuentes
+        pass
+    
+    # Si estamos en modo desarrollo o pruebas, usar la clave por defecto para redpill
+    if service in default_keys and default_keys[service]:
+        # Guardar en session_state para futuras llamadas
+        st.session_state[f"{service}_api_key"] = default_keys[service]
+        return default_keys[service]
+    
+    # Si todo falla, devolver vacío (se manejará en la UI)
+    return ""
 
 def get_api_url(service="redpill"):
     """
@@ -132,15 +155,32 @@ def get_api_url(service="redpill"):
     Returns:
         str: URL de la API
     """
+    # Valores por defecto para URLs de API
+    default_urls = {
+        "redpill": "https://api.redpill.ai/v1/chat/completions",
+        "openai": "https://api.openai.com/v1/chat/completions"
+    }
+    
+    # Primero, verificar si está en la sesión
+    if f"{service}_api_url" in st.session_state:
+        url = st.session_state[f"{service}_api_url"]
+        if url and len(url.strip()) > 0:  # Asegurarse de que no sea una cadena vacía
+            return url
+    
+    # Segundo, intentar obtener de st.secrets
     try:
-        return st.secrets[service]["api_url"]
-    except (KeyError, FileNotFoundError):
-        # Valores por defecto si no se encuentran en los secretos
-        if service == "redpill":
-            return "https://api.redpill.ai/v1/chat/completions"
-        elif service == "openai":
-            return "https://api.openai.com/v1/chat/completions"
-        return ""
+        url = st.secrets[service]["api_url"]
+        if url and len(url.strip()) > 0:
+            return url
+    except Exception:
+        # No mostrar errores aquí, usar el valor por defecto
+        pass
+    
+    # Tercero, usar valores por defecto
+    if service in default_urls:
+        return default_urls[service]
+    
+    return ""
 
 def confirmar_continuar(mensaje="¿Desea continuar con la iteración?", key=None):
     """
