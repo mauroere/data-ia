@@ -44,11 +44,78 @@ def main():
     print(f"\nVerificando archivo: {secrets_path}")
     if not os.path.exists(secrets_path):
         print(f"❌ El archivo no existe en la ruta: {secrets_path}")
+        # Verificar si existe el directorio .streamlit
+        streamlit_dir = os.path.dirname(secrets_path)
+        if not os.path.exists(streamlit_dir):
+            print(f"❌ El directorio .streamlit no existe en: {streamlit_dir}")
+            print("Creando directorio .streamlit...")
+            os.makedirs(streamlit_dir)
+            print("✅ Directorio .streamlit creado")
+            
+        # Crear archivo de secretos con contenido básico
+        print("Creando archivo secrets.toml con configuración básica...")
+        with open(secrets_path, 'w') as f:
+            f.write('[redpill]\n')
+            f.write('api_key = ""\n')
+            f.write('api_url = "https://api.redpill.ai/v1/chat/completions"\n')
+        print("✅ Archivo secrets.toml creado con configuración básica")
         return
     
     print("✅ El archivo existe")
     
-    # Leer el contenido del archivo para verificar formato
+    # Leer y verificar el contenido del archivo
+    try:
+        secrets = parse_toml_manually(secrets_path)
+        print("\nContenido del archivo:")
+        for section, values in secrets.items():
+            print(f"\n[{section}]")
+            for key, value in values.items():
+                print(f"{key} = {value}")
+        
+        # Verificar sección redpill
+        if "redpill" not in secrets:
+            print("\n❌ No se encontró la sección [redpill]")
+            print("Agregando sección [redpill]...")
+            secrets["redpill"] = {
+                "api_key": "",
+                "api_url": "https://api.redpill.ai/v1/chat/completions"
+            }
+            with open(secrets_path, 'w') as f:
+                for section, values in secrets.items():
+                    f.write(f"[{section}]\n")
+                    for key, value in values.items():
+                        f.write(f'{key} = "{value}"\n')
+                    f.write("\n")
+            print("✅ Sección [redpill] agregada")
+        
+        # Verificar api_key en sección redpill
+        elif "api_key" not in secrets["redpill"]:
+            print("\n❌ No se encontró api_key en la sección [redpill]")
+            print("Agregando api_key vacía...")
+            secrets["redpill"]["api_key"] = ""
+            with open(secrets_path, 'w') as f:
+                for section, values in secrets.items():
+                    f.write(f"[{section}]\n")
+                    for key, value in values.items():
+                        f.write(f'{key} = "{value}"\n')
+                    f.write("\n")
+            print("✅ api_key agregada")
+        
+        # Verificar permisos del archivo
+        import stat
+        st = os.stat(secrets_path)
+        perms = oct(st.st_mode)[-3:]
+        print(f"\nPermisos del archivo: {perms}")
+        if not os.access(secrets_path, os.W_OK):
+            print("❌ El archivo no tiene permisos de escritura")
+        else:
+            print("✅ El archivo tiene permisos de escritura")
+        
+    except Exception as e:
+        print(f"\n❌ Error al leer el archivo: {str(e)}")
+        print("Contenido actual del archivo:")
+        with open(secrets_path, 'r') as f:
+            print(f.read())
     with open(secrets_path, 'r') as f:
         content = f.read()
         print("\nPrimeras líneas del archivo:")

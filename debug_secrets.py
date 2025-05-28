@@ -2,6 +2,11 @@ import streamlit as st
 import os
 import json
 import toml
+import requests
+import urllib3
+
+# Desactivar advertencias de solicitudes (por problemas con certificados en algunos entornos)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def debug_secrets():
     """
@@ -127,10 +132,6 @@ def debug_secrets():
     # Opción para probar directamente la API
     st.subheader("Probar conexión a la API")
     if st.button("Probar API de Redpill"):
-        import requests
-        import urllib3
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {redpill_api_key}"
@@ -161,5 +162,74 @@ def debug_secrets():
         except Exception as e:
             st.error(f"✗ Excepción: {str(e)}")
     
+def check_api_key_state():
+    """Verifica y muestra el estado actual de la clave API en diferentes ubicaciones."""
+    st.subheader("🔍 Estado de la API Key")
+    
+    # 1. Verificar session_state
+    st.write("### Estado en session_state:")
+    if "redpill_api_key" in st.session_state:
+        key = st.session_state["redpill_api_key"]
+        if key and len(key.strip()) > 0:
+            st.success("✅ La clave está presente en session_state")
+            st.code(f"Longitud: {len(key)} caracteres")
+        else:
+            st.warning("⚠️ La clave está en session_state pero está vacía")
+    else:
+        st.info("ℹ️ No hay clave en session_state")
+    
+    # 2. Verificar secrets.toml
+    secrets_path = os.path.join(os.path.dirname(__file__), '.streamlit', 'secrets.toml')
+    st.write("### Estado en secrets.toml:")
+    if os.path.exists(secrets_path):
+        try:
+            secrets = toml.load(secrets_path)
+            if "redpill" in secrets and "api_key" in secrets["redpill"]:
+                key = secrets["redpill"]["api_key"]
+                if key and len(key.strip()) > 0:
+                    st.success("✅ La clave está presente en secrets.toml")
+                    st.code(f"Longitud: {len(key)} caracteres")
+                else:
+                    st.warning("⚠️ La clave está en secrets.toml pero está vacía")
+            else:
+                st.warning("⚠️ No se encontró la sección [redpill] o api_key en secrets.toml")
+        except Exception as e:
+            st.error(f"❌ Error al leer secrets.toml: {e}")
+    else:
+        st.error("❌ No se encontró el archivo secrets.toml")
+    
+    # 3. Verificar st.secrets
+    st.write("### Estado en st.secrets:")
+    try:
+        if "redpill" in st.secrets and "api_key" in st.secrets["redpill"]:
+            key = st.secrets["redpill"]["api_key"]
+            if key and len(key.strip()) > 0:
+                st.success("✅ La clave está presente en st.secrets")
+                st.code(f"Longitud: {len(key)} caracteres")
+            else:
+                st.warning("⚠️ La clave está en st.secrets pero está vacía")
+        else:
+            st.warning("⚠️ No se encontró la sección [redpill] o api_key en st.secrets")
+    except Exception as e:
+        st.error(f"❌ Error al acceder a st.secrets: {e}")
+    
+    # Mostrar recomendaciones
+    st.write("### 📋 Recomendaciones:")
+    st.markdown("""
+    1. Si la clave no está en ningún lugar, configúrala en el Panel de Administración
+    2. Si la clave está en secrets.toml pero no en st.secrets, reinicia la aplicación
+    3. Si la clave está pero no funciona, verifica que sea correcta en el Panel de Administración
+    """)
+
 if __name__ == "__main__":
+    st.title("🔧 Diagnóstico de Configuración")
+    
+    # Agregar botón para ejecutar el diagnóstico de API key
+    if st.button("Verificar estado de API Key"):
+        check_api_key_state()
+    
+    # Separador
+    st.markdown("---")
+    
+    # Mantener la función original de debug_secrets
     debug_secrets()

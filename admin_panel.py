@@ -24,27 +24,47 @@ def run_admin_panel():
     with tab3:
         manage_general_settings()
 
+def show_api_key_debug():
+    """Muestra un botón para diagnosticar problemas con la API key."""
+    from debug_secrets import check_api_key_state
+    
+    with st.expander("🔧 Diagnóstico de API Key"):
+        st.info("Si la API key no funciona correctamente, puedes usar esta herramienta para diagnosticar el problema.")
+        if st.button("Ejecutar diagnóstico"):
+            check_api_key_state()
+
 def manage_api_keys():
     """Gestiona las claves API."""
     st.header("🔑 Gestión de Claves API")
     st.write("Configura las claves API para los diferentes servicios utilizados por la aplicación.")
     
+    # Mostrar herramienta de diagnóstico al principio
+    show_api_key_debug()
+    
     # Redpill API Key
     st.subheader("Redpill API")
     current_redpill_key = get_api_key_from_config("redpill") or ""
-    masked_key = mask_api_key(current_redpill_key)
+    
+    # Si la clave está en session_state, usarla (tiene prioridad)
+    if "redpill_api_key" in st.session_state and st.session_state["redpill_api_key"]:
+        current_redpill_key = st.session_state["redpill_api_key"]
+    
+    masked_key = mask_api_key(current_redpill_key) if current_redpill_key else ""
     
     st.write("Esta clave se utiliza para el asistente de datos y el análisis con IA.")
     
     # Mostrar la clave actual enmascarada
-    if current_redpill_key:
+    if current_redpill_key and len(current_redpill_key.strip()) > 0:
         st.success(f"✅ Clave API configurada: {masked_key}")
+        # Asegurarse de que esté en session_state
+        if "redpill_api_key" not in st.session_state:
+            st.session_state["redpill_api_key"] = current_redpill_key
     else:
         st.warning("⚠️ No hay clave API configurada para Redpill.")
     
-    # Opción para cambiar la clave
-    change_key = st.checkbox("Cambiar clave API de Redpill", key="change_redpill_key")
-      if change_key:
+    # Opción para cambiar la clave    change_key = st.checkbox("Cambiar clave API de Redpill", key="change_redpill_key")
+    
+    if change_key:
         new_key = st.text_input(
             "Nueva clave API de Redpill:", 
             type="password",

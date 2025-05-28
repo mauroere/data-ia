@@ -71,9 +71,15 @@ def make_api_request_contexto(pregunta: str) -> dict:
     api_key = get_api_key("redpill")
     api_url = get_api_url("redpill")
     
-    if not api_key:
-        # Intentar obtener la clave API del usuario
-        st.warning("🔑 No se ha encontrado la clave API de Redpill en la configuración.")
+    # Verificar si la clave está en session_state y es válida
+    if "redpill_api_key" in st.session_state:
+        api_key = st.session_state["redpill_api_key"]
+        if api_key and len(api_key.strip()) > 0:
+            return api_key  # Usar la clave existente si es válida
+
+    # Si no hay clave válida, pedirla al usuario
+    if not api_key or len(api_key.strip()) == 0:
+        st.warning("🔑 Se requiere configurar la clave API de Redpill.")
         
         # Mostrar información adicional para ayudar a solucionar el problema
         with st.expander("ℹ️ Información para solucionar problemas"):

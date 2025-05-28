@@ -75,18 +75,22 @@ def get_api_key(service="openai"):
     """
     # Primero, verificar si está en la sesión (prioridad más alta)
     if f"{service}_api_key" in st.session_state:
-        return st.session_state[f"{service}_api_key"]
+        key = st.session_state[f"{service}_api_key"]
+        if key:  # Asegurarse de que no sea una cadena vacía
+            return key
     
     # Segundo, intentar obtener de la configuración persistente
     try:
         from config_manager import get_api_key_from_config
         api_key = get_api_key_from_config(service)
-        if api_key:
+        if api_key and len(api_key.strip()) > 0:  # Verificar que no sea una cadena vacía
             # Guardar en session_state para futuras llamadas
             st.session_state[f"{service}_api_key"] = api_key
             return api_key
-    except ImportError:
-        pass  # Si no se puede importar, continuar con el flujo normal
+    except ImportError as e:
+        st.error(f"Error al importar config_manager: {e}")
+    except Exception as e:
+        st.error(f"Error al obtener la API key: {e}")
     
     # Tercero, intentar obtener del archivo secrets.toml
     try:
