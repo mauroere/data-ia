@@ -71,6 +71,7 @@ Para iniciar la aplicación en tu entorno local:
    - En Linux/Mac: `sh setup.sh`
 
 Si encuentras algún problema, ejecuta la herramienta de diagnóstico:
+
 ```
 streamlit run diagnostico_sistema.py
 ```
