@@ -16,6 +16,25 @@ def make_api_request(pregunta: str) -> dict:
     if not api_key:
         # Intentar obtener la clave API del usuario
         st.warning("🔑 No se ha encontrado la clave API de Redpill en la configuración.")
+        
+        # Mostrar información adicional para ayudar a solucionar el problema
+        with st.expander("ℹ️ Información para solucionar problemas"):
+            st.markdown("""
+            ### Posibles causas:
+            1. **Archivo de secretos no encontrado** - Verifica que existe el archivo `.streamlit/secrets.toml`
+            2. **Formato incorrecto** - El archivo debe usar el formato TOML correcto:
+            ```toml
+            [redpill]
+            api_key = "tu-clave-api"
+            api_url = "https://api.redpill.ai/v1/chat/completions"
+            ```
+            3. **Permisos de archivo** - Verifica que la aplicación tiene permisos para leer el archivo
+            
+            ### Herramientas de diagnóstico:
+            - Ejecuta `python debug_secrets.py` para diagnosticar problemas con el archivo de secretos
+            - Ejecuta `python test_conexion_redpill_basic.py` para probar la conexión con la API
+            """)
+        
         api_key = st.text_input(
             "Ingresa tu clave API de Redpill:",
             type="password",
@@ -36,9 +55,8 @@ def make_api_request(pregunta: str) -> dict:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
-        
-        payload = {
-            "model": "redpill-llama-3-8b-chat",
+          payload = {
+            "model": "mistralai/ministral-8b",
             "messages": [{"role": "user", "content": pregunta}],
             "temperature": 0.7,
             "max_tokens": 1000

@@ -73,29 +73,34 @@ def get_api_key(service="openai"):
     Returns:
         str: Clave API
     """
+    # Primero, verificar si está en la sesión (prioridad más alta)
+    if f"{service}_api_key" in st.session_state:
+        return st.session_state[f"{service}_api_key"]
+    
     # Intentar obtener del archivo secrets.toml
     try:
         return st.secrets[service]["api_key"]
-    except (KeyError, FileNotFoundError):
-        # Si no está en los secretos, verificar si está en la sesión
-        if f"{service}_api_key" in st.session_state:
-            return st.session_state[f"{service}_api_key"]
-        
-        # Si no está en la sesión, intentar leer directamente del archivo
+    except (KeyError, FileNotFoundError) as e:
+        st.warning(f"No se pudo cargar la clave API de {service} desde los secretos: {str(e)}")
+        # Si no está en los secretos, intentar leer directamente del archivo
         try:
             import toml
             import os
             
-            # Ruta al archivo de secretos
-            secrets_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.streamlit', 'secrets.toml')
+            # Ruta al archivo de secretos (probar múltiples ubicaciones)
+            possible_paths = [
+                os.path.join(os.path.dirname(os.path.dirname(__file__)), '.streamlit', 'secrets.toml'),
+                os.path.join(os.path.dirname(__file__), '.streamlit', 'secrets.toml')
+            ]
             
-            if os.path.exists(secrets_path):
-                secrets = toml.load(secrets_path)
-                if service in secrets and "api_key" in secrets[service]:
-                    # Guardar en session_state para futuras llamadas
-                    api_key = secrets[service]["api_key"]
-                    st.session_state[f"{service}_api_key"] = api_key
-                    return api_key
+            for secrets_path in possible_paths:
+                if os.path.exists(secrets_path):
+                    secrets = toml.load(secrets_path)
+                    if service in secrets and "api_key" in secrets[service]:
+                        # Guardar en session_state para futuras llamadas
+                        api_key = secrets[service]["api_key"]
+                        st.session_state[f"{service}_api_key"] = api_key
+                        return api_key
         except Exception as e:
             st.warning(f"Error al leer archivo de secretos: {e}")
         
